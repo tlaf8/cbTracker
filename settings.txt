@@ -1,0 +1,19 @@
+QR Code 1: Ianna Dumali
+QR Code 2: Seedona Yosef
+QR Code 3: Alexa Lacap
+QR Code 4: Emmanuel Dahoe
+QR Code 5: Adrian Green
+QR Code 6: Lylah Roth-Myndio
+QR Code 7: Surafiel Tseguay
+QR Code 8: Ben Hunt
+QR Code 9: Default
+QR Code 10: Default
+QR Code 11: Default
+QR Code 12: Default
+QR Code 13: Default
+QR Code 14: Default
+QR Code 15: Default
+
+Delay between scans (seconds): 2
+
+Room number: 219
