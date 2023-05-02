@@ -1,8 +1,15 @@
 import qrcode
+import hashlib
+from filelib import read_file, write_file
 
-with open("classlist.txt", "r") as students:
-    lines = [line.rstrip() for line in students if line != "\n"]
+lines = read_file(r"classlist.txt")
+secret = input("Please enter a secret to encrypt with: ")
+open("resources/validation.txt", "w").close()
 
+codes = []
 for entry in lines:
-    qrcode.make(entry).save(f"qr_codes\\{entry}.png")
+    temp = hashlib.sha256((entry + secret).encode()).hexdigest()
+    qrcode.make(temp).save(rf"qr_codes/{entry}.png")
+    codes.append(temp)
 
+write_file(r"resources/validation.txt", codes)
