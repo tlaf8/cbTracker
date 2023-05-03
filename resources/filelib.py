@@ -1,19 +1,31 @@
-def read_file(path: str):
+import json
+
+
+def read_json(path: str) -> dict:
     try:
         with open(path, "r") as file:
-            return [line.rstrip() for line in file if line != "\n" and "#" not in line]
+            return json.load(file)
 
     except FileNotFoundError:
         print("File could not be found.")
-        exit(2)
+        exit(5)
 
 
-def write_file(path: str, iterable: list):
+def read_file(path: str) -> list:
+    try:
+        with open(path, "r") as file:
+            return [line.rstrip() for line in file.readlines() if line != "\n" and line != "#"]
+
+    except FileNotFoundError:
+        print("File could not be found.")
+        exit(5)
+
+
+def write_file(path: str, obj: dict):
     try:
         with open(path, "a") as file:
-            for entry in iterable:
-                file.write(entry + "\n")
+            json.dump(obj, file)
 
     except FileNotFoundError:
         print("File could not be found.")
-        exit(2)
+        exit(5)
