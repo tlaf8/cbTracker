@@ -3,6 +3,7 @@ import cv2
 import json
 import qrcode
 import hashlib
+from json.decoder import JSONDecodeError
 from sys import exit
 from datetime import datetime
 from time import sleep
@@ -15,8 +16,13 @@ def read_json(path: str) -> dict:
 
     except FileNotFoundError:
         print("File could not be found.")
-        print("Exiting in 10 seconds (You can close this window)")
-        sleep(10)
+        input("Press ENTER to exit...")
+        exit(5)
+
+    except JSONDecodeError:
+        print("File is empty. Try creating QR codes.")
+        input("Press ENTER to exit...")
+
         exit(5)
 
 
@@ -27,8 +33,7 @@ def read_file(path: str) -> list:
 
     except FileNotFoundError:
         print("File could not be found.")
-        print("Exiting in 10 seconds (You can close this window)")
-        sleep(10)
+        input("Press ENTER to exit...")
         exit(5)
 
 
@@ -39,23 +44,22 @@ def write_file(path: str, obj: dict):
 
     except FileNotFoundError:
         print("File could not be found.")
-        print("Exiting in 10 seconds (You can close this window)")
-        sleep(10)
+        input("Press ENTER to exit...")
         exit(5)
 
 
 def generate_qr_codes():
-    lines = read_file(r"resources/classlist.txt")
+    lines = read_file(r"../../resources/classlist.txt")
     secret = input("Please enter a secret to encrypt with: ")
-    open("resources/validation.json", "w").close()
+    open("../../resources/validation.json", "w").close()
 
     codes = {}
     for entry in lines:
         temp = hashlib.sha256((entry + secret).encode()).hexdigest()
-        qrcode.make(temp).save(rf"resources/qr_codes/{entry}.png")
+        qrcode.make(temp).save(rf"../../resources/qr_codes/{entry}.png")
         codes[entry] = temp
 
-    write_file(r"resources/validation.json", {v: k for k, v in codes.items()})
+    write_file(r"../../resources/validation.json", {v: k for k, v in codes.items()})
 
 
 def read_code(message: str):
@@ -85,12 +89,14 @@ def read_code(message: str):
             cam.release()
             cv2.destroyAllWindows()
             generate_qr_codes()
+            print("Finished!")
+            input("Press ENTER to exit...")
             exit(0)
 
 
 if __name__ == "__main__":
     print("Reading settings...")
-    lines = read_file("resources/settings.txt")
+    lines = read_file("../../resources/settings.txt")
     temps = []
     delay = -1
     room = -1
@@ -108,33 +114,33 @@ if __name__ == "__main__":
 
             else:
                 print("Unexpected value found in settings. Please review the file.")
+                input("Press ENTER to exit...")
                 exit(1)
 
     except ValueError:
         print("Unexpected value for delay and/or room number in settings.txt. Please check and run again.")
-        print("Exiting in 10 seconds (You can close this window)")
-        sleep(10)
+        input("Press ENTER to exit...")
         exit(2)
 
     status_cells = {f"SF{room}-1": "G2", f"SF{room}-2": "H2", f"SF{room}-3": "I2", f"SF{room}-4": "J2", f"SF{room}-5": "K2", f"SF{room}-6": "L2"}
     status_rev = {"OUT": "IN", "IN": "OUT"}
     temps_dict = {f"student{i + 1}": val.split(":")[1].strip() for i, val in enumerate(temps)}
     date = datetime.today()
-    print("Starting gspread client...")
     print("Opening camera. Smile!")
     chromebook = read_code("Please show chromebook")
     sleep(delay)
     name = read_code("Please show ID")
     cv2.destroyAllWindows()
-    decrypt = read_json("resources/validation.json")
+    decrypt = read_json("../../resources/validation.json")
 
     print("Verifying inputs...")
     if name not in decrypt:
         print("QR code not recognized. Please get teacher to look into this.")
+        input("Press ENTER to exit...")
         exit(3)
 
     print("Starting gspread client...")
-    client = gspread.service_account("resources/cbtracking-385301-ac9bc3a18813.json")
+    client = gspread.service_account("../../resources/cbtracking-385301-ac9bc3a18813.json")
     sheet = client.open("Chromebook Tracker").worksheet(f"SF{room}")
 
     try:
@@ -159,10 +165,9 @@ if __name__ == "__main__":
         sheet.update(f"E{last_row}", f"{date.hour}:{date.minute}:{date.second}")
 
     except Exception as e:
-        print(f"Something went wrong. Please refer to exception log:\n{e}")
+        print(f"Something went wrong. Please refer to exception:\n{type(e).__name__} --> {e}")
         print("Exiting in 10 seconds (You can close this window)")
         sleep(10)
         exit(4)
 
-    print("Finished! Exiting in 5 seconds...")
-    sleep(5)
+    input("Finished! Press ENTER to exit...")
