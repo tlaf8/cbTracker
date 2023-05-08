@@ -36,8 +36,7 @@ if ans == "y":
             exit(1)
 
     print("Finished! You can close this window now. Make sure to take a look at README.md!")
-    print("Automatically closing in 10 seconds...")
-    sleep(10)
+    input("Press ENTER to exit...")
     exit(0)
 
 else:
