@@ -122,7 +122,7 @@ if __name__ == "__main__":
         input("Press ENTER to exit...")
         exit(2)
 
-    status_cells = {f"SF{room}-1": "G2", f"SF{room}-2": "H2", f"SF{room}-3": "I2", f"SF{room}-4": "J2", f"SF{room}-5": "K2", f"SF{room}-6": "L2"}
+    status_cells = {f"SF{room}-1": "H2", f"SF{room}-2": "H3", f"SF{room}-3": "H4", f"SF{room}-4": "H5", f"SF{room}-5": "H6", f"SF{room}-6": "H7"}
     status_rev = {"OUT": "IN", "IN": "OUT"}
     temps_dict = {f"student{i + 1}": val.split(":")[1].strip() for i, val in enumerate(temps)}
     date = datetime.today()
