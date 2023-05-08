@@ -1,3 +1,7 @@
+# Add or remove students to this list then run the QR code
+# generation from the main program. Press 'g' with the main
+# window open and follow the instructions.
+
 Adrian Green
 Alexa Lacap
 Ali Norris
@@ -27,6 +31,13 @@ Sifu Tsegay
 Tessa Tyson
 Ti Lisowicz
 Ty Stang
+
+
+
+# These are here for temporary QR codes to give out
+# to other students who visit often. Feel free to add
+# or remove as needed
+
 student1
 student2
 student3

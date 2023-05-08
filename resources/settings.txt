@@ -1,3 +1,7 @@
+# QR code assignments for students who visit often. If one of these QR codes
+# are scanned, the name attached will be uploaded to the sheet. If scanned and
+# not assigned to anyone, 'Default' will appear as the student.
+
 QR Code 1: Ianna Dumali
 QR Code 2: Seedona Yosef
 QR Code 3: Alexa Lacap
@@ -14,6 +18,17 @@ QR Code 13: Default
 QR Code 14: Default
 QR Code 15: Default
 
+
+
+# Number of seconds between scans so that student has time to swap out the
+# chromebook's qr code and their own. Otherwise, the program will read it too
+# quickly!
+
 Delay between scans (seconds): 2
+
+
+
+# Room number that the program will be running for. This is for the program to know
+# what room and sheet to update.
 
 Room number: 219

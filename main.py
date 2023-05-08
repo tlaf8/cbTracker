@@ -23,7 +23,7 @@ def read_json(path: str) -> dict:
 def read_file(path: str) -> list:
     try:
         with open(path, "r") as file:
-            return [line.rstrip() for line in file.readlines() if line != "\n" and line != "#"]
+            return [line.rstrip() for line in file.readlines() if line != "\n" and "#" not in line]
 
     except FileNotFoundError:
         print("File could not be found.")
@@ -67,8 +67,8 @@ def read_code(message: str):
         data, _, _ = reader.detectAndDecode(frame)
 
         frame = cv2.flip(frame, 1)
-        cv2.putText(frame, message, [10, 30], cv2.FONT_HERSHEY_DUPLEX, 1, [0, 0, 0], 1, cv2.LINE_AA)
-        cv2.putText(frame, "Press 'g' to generate QR codes and 'q' to quit.", [10, 40], cv2.FONT_HERSHEY_DUPLEX, 1, [0, 0, 0], 1, cv2.LINE_AA)
+        cv2.putText(frame, message, [10, 30], cv2.FONT_HERSHEY_DUPLEX, 0.75, [0, 0, 0], 1, cv2.LINE_AA)
+        cv2.putText(frame, "Press 'g' to generate QR codes and 'q' to quit.", [10, 60], cv2.FONT_HERSHEY_DUPLEX, 0.75, [0, 0, 0], 1, cv2.LINE_AA)
         cv2.imshow("Scanning...", frame)
         cv2.setWindowProperty("Scanning...", cv2.WND_PROP_TOPMOST, 1)
 
@@ -116,14 +116,11 @@ if __name__ == "__main__":
         sleep(10)
         exit(2)
 
-    print("Starting gspread client...")
-    client = gspread.service_account("resources/cbtracking-385301-ac9bc3a18813.json")
-    sheet = client.open("Chromebook Tracker").worksheet(f"SF{room}")
-
     status_cells = {f"SF{room}-1": "G2", f"SF{room}-2": "H2", f"SF{room}-3": "I2", f"SF{room}-4": "J2", f"SF{room}-5": "K2", f"SF{room}-6": "L2"}
     status_rev = {"OUT": "IN", "IN": "OUT"}
     temps_dict = {f"student{i + 1}": val.split(":")[1].strip() for i, val in enumerate(temps)}
     date = datetime.today()
+    print("Starting gspread client...")
     print("Opening camera. Smile!")
     chromebook = read_code("Please show chromebook")
     sleep(delay)
@@ -135,6 +132,10 @@ if __name__ == "__main__":
     if name not in decrypt:
         print("QR code not recognized. Please get teacher to look into this.")
         exit(3)
+
+    print("Starting gspread client...")
+    client = gspread.service_account("resources/cbtracking-385301-ac9bc3a18813.json")
+    sheet = client.open("Chromebook Tracker").worksheet(f"SF{room}")
 
     try:
         # Try this method to search for dates (hopefully faster).
@@ -165,4 +166,3 @@ if __name__ == "__main__":
 
     print("Finished! Exiting in 5 seconds...")
     sleep(5)
-    
