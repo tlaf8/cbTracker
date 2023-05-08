@@ -2,3 +2,5 @@
 venv/
 qr_codes/*.png
 __pycache__/
+build/
+dist/
