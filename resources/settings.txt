@@ -2,14 +2,14 @@
 # are scanned, the name attached will be uploaded to the sheet. If scanned and
 # not assigned to anyone, 'Default' will appear as the student.
 
-QR Code 1: Ianna Dumali
-QR Code 2: Seedona Yosef
-QR Code 3: Alexa Lacap
-QR Code 4: Emmanuel Dahoe
-QR Code 5: Adrian Green
-QR Code 6: Lylah Roth-Myndio
-QR Code 7: Surafiel Tseguay
-QR Code 8: Ben Hunt
+QR Code 1: Default
+QR Code 2: Default
+QR Code 3: Default
+QR Code 4: Default
+QR Code 5: Default
+QR Code 6: Default
+QR Code 7: Default
+QR Code 8: Default
 QR Code 9: Default
 QR Code 10: Default
 QR Code 11: Default
@@ -24,7 +24,7 @@ QR Code 15: Default
 # chromebook's qr code and their own. Otherwise, the program will read it too
 # quickly!
 
-Delay between scans (seconds): 2
+Delay between scans (seconds): 1
 
 
 
