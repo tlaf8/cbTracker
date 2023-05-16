@@ -1,7 +1,8 @@
 .idea
 venv/
-qr_codes/*.png
+resources/qr_codes/*.png
 __pycache__/
 build/
 dist/
 main.spec
+reader.py
