@@ -5,8 +5,8 @@ import qrcode
 import hashlib
 from json.decoder import JSONDecodeError
 from sys import exit
+from base64 import b64decode
 from datetime import datetime
-from time import sleep
 
 
 def read_json(path: str) -> dict:
@@ -20,7 +20,8 @@ def read_json(path: str) -> dict:
         exit(5)
 
     except JSONDecodeError:
-        print("File is empty. Try creating QR codes.")
+        print("File is empty. Generating QR codes. Please rerun the program.")
+        generate_qr_codes()
         input("Press ENTER to exit...")
         exit(6)
 
@@ -60,7 +61,7 @@ def generate_qr_codes():
     write_file(r"../../resources/validation.json", {v: k for k, v in codes.items()})
 
 
-def read_code(message: str):
+def read_code(message: str) -> str:
     cam = cv2.VideoCapture(0)
     reader = cv2.QRCodeDetector()
 
@@ -82,7 +83,8 @@ def read_code(message: str):
         if key == ord('q'):
             cam.release()
             cv2.destroyAllWindows()
-            return "break"
+            input("Finished! Press ENTER to exit...")
+            exit(0)
 
         elif key == ord('g'):
             cam.release()
@@ -131,25 +133,12 @@ if __name__ == "__main__":
         cv2.destroyAllWindows()
 
         print("Verifying inputs...")
-        if name == "break":
-            break
-
         if name not in decrypt:
             print("QR code not recognized. Please get teacher to look into this.")
             continue
 
         print("Starting gspread client...")
-        client = gspread.service_account_from_dict({
-            'type': 'service_account', 'project_id': 'cbtracking-385301',
-            'private_key_id': 'ac9bc3a1881348c6352007b146255c7dbd8c6fb1',
-            'private_key': '-----BEGIN PRIVATE KEY-----\nMIIEuwIBADANBgkqhkiG9w0BAQEFAASCBKUwggShAgEAAoIBAQCaq207Yu64qGuy\ndvkE9DNhD0iuKfYbwVDaeR8q4Tdc8OS4Jjeml4BIIoWlLt4sfljLHCMp6txIMH0W\nVhHo1cLXbSpQtYx0qhYbzOlg9eOAudT7UR5rxI1sDOCZEHK9CZt6a+9EwcTEOBJX\nFoDkF37qkMZ4LR7ctD/zEbbHAzYdtb97e98SV44xeeDQBhE+qHDbWwt/YU/5t3lr\nqLIxMIG7Or39ddTNlSdgBQ6VqrVNByo5lfAb4Tx5RVfjUw1rHXyFuUz9udEAbTdQ\nobfArdo0pFVw7wiyR1LbPpiTjHMpqTV8iYyD7D/eXyMD4Qm4wL2VT6z3a+ucOMfk\n/JiigCKBAgMBAAECgf8R9X83Jh5ohd6cEvLa7pHzdRqUtbDw+Sx4KzbxOiAfZg5d\nkDImOn0950U1HlQ1de2/Z8cPyMRe4FpcAOB8P6e/Ys3c+w/PkDHP06Odq/lT6+Ww\npWZE6hkJ4KIICkvL8GzFVizeFu24CAlK0qnvcWfZBlOlBmm2/ciLDqjUuKzaVllc\n+HmAuOr6/JUiwLEkRyHhHkF/FjeP76dEqr5vq56OQKAJ3DqvbyhegdidRjcUj3mc\ndedpLvKZ/jmduAhW5GVquOd2x6hFcCmVeTCcoEI7IEBglGaI47/9Ac5pmMNAWZ3g\ndeVcUftTvApFfC5gmaPuyOO4tJ5E8tngKLtq3CECgYEAzG//oAfd6WckSul5QUjy\npu+IBvWmjUWEAmIQsC6Oxz0NHjf/LqhMWJ0KrWKqBdjGK6JtmZozVVqGr4tzgCJ4\n9h1HZcDh7SGwiRDjEe4gu/tfXxBUeX9dk0QBebg0QGiGWCAWUI0bUqMggjtazArr\nigJNY8tmmJa8Uvsq3QFuNlsCgYEAwa4LwlHcchq31xHL6Q1ZRoZU/4QO/rRrBRVB\n/26Gsv9M5fDoaghDop6NlN116JYvuPSTiRmykZpLPUb4CBB5pPdgC+6qP3inz8Ij\n1NJrcxxon+NQX1/wiFBytSJ0s4ws2RynCh65KneLAAlAbWLkhTKXncpZFMh+TXGx\ncTuS+VMCgYAdh0fK25gH8Gfjkhl7fofd6Nci+jRWT2Yj2fpDGFZzHLRaWwg2uwRc\nAELcjFW2hnsJLmraNtWXTH4LuP6z0UbbdZssbVG0qJsRESlbG6QKwuIhnwA0lFr1\nvGriI+MYMoDFFc1jUR5TL1CwvtX8hs9CndaDxYtKGuuUqMamKWC75QKBgEiq0ZSl\n/Cz/o0xZTAVz0bQpQIjh9nJQJPsyP6HjyTwtl5+KZNkropzIGlzpPoz2lI8zjItb\nDemdV291SihUbh+cBPhVIqFP1r6Xm7QFAvWcihC7S/OM3oV2kaMue1TGWilXm8Cr\nSFQLqCZqUjb4bL8g/UvhmMy4cNMDvky6ymkrAoGBAJItRGigKTWhn6DgYf9Veiec\nEZl1jES6IS8WVeHmlC3jHFobyjkcTmS2hEFJ6PtjXOqfKAfDbEfwP/I5WHyEDBOg\nEGirVfOaMQIK3AI+327KZD0AvYKKRsTvQ6gbZhIU+uWDq+xvAOjf78HakQMWfdda\nTdtuT3jsNbc7QIZtdIK3\n-----END PRIVATE KEY-----\n',
-            'client_email': 'cbtracker@cbtracking-385301.iam.gserviceaccount.com',
-            'client_id': '101945732153629863138',
-            'auth_uri': 'https://accounts.google.com/o/oauth2/auth',
-            'token_uri': 'https://oauth2.googleapis.com/token',
-            'auth_provider_x509_cert_url': 'https://www.googleapis.com/oauth2/v1/certs',
-            'client_x509_cert_url': 'https://www.googleapis.com/robot/v1/metadata/x509/cbtracker%40cbtracking-385301.iam.gserviceaccount.com'
-        })
+        client = gspread.service_account_from_dict(json.loads(b64decode("eyJ0eXBlIjoic2VydmljZV9hY2NvdW50IiwicHJvamVjdF9pZCI6ImNidHJhY2tpbmctMzg1MzAxIiwicHJpdmF0ZV9rZXlfaWQiOiJhYzliYzNhMTg4MTM0OGM2MzUyMDA3YjE0NjI1NWM3ZGJkOGM2ZmIxIiwicHJpdmF0ZV9rZXkiOiItLS0tLUJFR0lOIFBSSVZBVEUgS0VZLS0tLS1cbk1JSUV1d0lCQURBTkJna3Foa2lHOXcwQkFRRUZBQVNDQktVd2dnU2hBZ0VBQW9JQkFRQ2FxMjA3WXU2NHFHdXlcbmR2a0U5RE5oRDBpdUtmWWJ3VkRhZVI4cTRUZGM4T1M0SmplbWw0QklJb1dsTHQ0c2ZsakxIQ01wNnR4SU1IMFdcblZoSG8xY0xYYlNwUXRZeDBxaFliek9sZzllT0F1ZFQ3VVI1cnhJMXNET0NaRUhLOUNadDZhKzlFd2NURU9CSlhcbkZvRGtGMzdxa01aNExSN2N0RC96RWJiSEF6WWR0Yjk3ZTk4U1Y0NHhlZURRQmhFK3FIRGJXd3QvWVUvNXQzbHJcbnFMSXhNSUc3T3IzOWRkVE5sU2RnQlE2VnFyVk5CeW81bGZBYjRUeDVSVmZqVXcxckhYeUZ1VXo5dWRFQWJUZFFcbm9iZkFyZG8wcEZWdzd3aXlSMUxiUHBpVGpITXBxVFY4aVl5RDdEL2VYeU1ENFFtNHdMMlZUNnozYSt1Y09NZmtcbi9KaWlnQ0tCQWdNQkFBRUNnZjhSOVg4M0poNW9oZDZjRXZMYTdwSHpkUnFVdGJEdytTeDRLemJ4T2lBZlpnNWRcbmtESW1PbjA5NTBVMUhsUTFkZTIvWjhjUHlNUmU0RnBjQU9COFA2ZS9ZczNjK3cvUGtESFAwNk9kcS9sVDYrV3dcbnBXWkU2aGtKNEtJSUNrdkw4R3pGVml6ZUZ1MjRDQWxLMHFudmNXZlpCbE9sQm1tMi9jaUxEcWpVdUt6YVZsbGNcbitIbUF1T3I2L0pVaXdMRWtSeUhoSGtGL0ZqZVA3NmRFcXI1dnE1Nk9RS0FKM0RxdmJ5aGVnZGlkUmpjVWozbWNcbmRlZHBMdktaL2ptZHVBaFc1R1ZxdU9kMng2aEZjQ21WZVRDY29FSTdJRUJnbEdhSTQ3LzlBYzVwbU1OQVdaM2dcbmRlVmNVZnRUdkFwRmZDNWdtYVB1eU9PNHRKNUU4dG5nS0x0cTNDRUNnWUVBekcvL29BZmQ2V2NrU3VsNVFVanlcbnB1K0lCdldtalVXRUFtSVFzQzZPeHowTkhqZi9McWhNV0owS3JXS3FCZGpHSzZKdG1ab3pWVnFHcjR0emdDSjRcbjloMUhaY0RoN1NHd2lSRGpFZTRndS90Zlh4QlVlWDlkazBRQmViZzBRR2lHV0NBV1VJMGJVcU1nZ2p0YXpBcnJcbmlnSk5ZOHRtbUphOFV2c3EzUUZ1TmxzQ2dZRUF3YTRMd2xIY2NocTMxeEhMNlExWlJvWlUvNFFPL3JSckJSVkJcbi8yNkdzdjlNNWZEb2FnaERvcDZObE4xMTZKWXZ1UFNUaVJteWtacExQVWI0Q0JCNXBQZGdDKzZxUDNpbno4SWpcbjFOSnJjeHhvbitOUVgxL3dpRkJ5dFNKMHM0d3MyUnluQ2g2NUtuZUxBQWxBYldMa2hUS1huY3BaRk1oK1RYR3hcbmNUdVMrVk1DZ1lBZGgwZksyNWdIOEdmamtobDdmb2ZkNk5jaStqUldUMllqMmZwREdGWnpITFJhV3dnMnV3UmNcbkFFTGNqRlcyaG5zSkxtcmFOdFdYVEg0THVQNnowVWJiZFpzc2JWRzBxSnNSRVNsYkc2UUt3dUlobndBMGxGcjFcbnZHcmlJK01ZTW9ERkZjMWpVUjVUTDFDd3Z0WDhoczlDbmRhRHhZdEtHdXVVcU1hbUtXQzc1UUtCZ0VpcTBaU2xcbi9Dei9vMHhaVEFWejBiUXBRSWpoOW5KUUpQc3lQNkhqeVR3dGw1K0taTmtyb3B6SUdsenBQb3oybEk4empJdGJcbkRlbWRWMjkxU2loVWJoK2NCUGhWSXFGUDFyNlhtN1FGQXZXY2loQzdTL09NM29WMmthTXVlMVRHV2lsWG04Q3JcblNGUUxxQ1pxVWpiNGJMOGcvVXZobU15NGNOTUR2a3k2eW1rckFvR0JBSkl0UkdpZ0tUV2huNkRnWWY5VmVpZWNcbkVabDFqRVM2SVM4V1ZlSG1sQzNqSEZvYnlqa2NUbVMyaEVGSjZQdGpYT3FmS0FmRGJFZndQL0k1V0h5RURCT2dcbkVHaXJWZk9hTVFJSzNBSSszMjdLWkQwQXZZS0tSc1R2UTZnYlpoSVUrdVdEcSt4dkFPamY3OEhha1FNV2ZkZGFcblRkdHVUM2pzTmJjN1FJWnRkSUszXG4tLS0tLUVORCBQUklWQVRFIEtFWS0tLS0tXG4iLCJjbGllbnRfZW1haWwiOiJjYnRyYWNrZXJAY2J0cmFja2luZy0zODUzMDEuaWFtLmdzZXJ2aWNlYWNjb3VudC5jb20iLCJjbGllbnRfaWQiOiIxMDE5NDU3MzIxNTM2Mjk4NjMxMzgiLCJhdXRoX3VyaSI6Imh0dHBzOi8vYWNjb3VudHMuZ29vZ2xlLmNvbS9vL29hdXRoMi9hdXRoIiwidG9rZW5fdXJpIjoiaHR0cHM6Ly9vYXV0aDIuZ29vZ2xlYXBpcy5jb20vdG9rZW4iLCJhdXRoX3Byb3ZpZGVyX3g1MDlfY2VydF91cmwiOiJodHRwczovL3d3dy5nb29nbGVhcGlzLmNvbS9vYXV0aDIvdjEvY2VydHMiLCJjbGllbnRfeDUwOV9jZXJ0X3VybCI6Imh0dHBzOi8vd3d3Lmdvb2dsZWFwaXMuY29tL3JvYm90L3YxL21ldGFkYXRhL3g1MDkvY2J0cmFja2VyJTQwY2J0cmFja2luZy0zODUzMDEuaWFtLmdzZXJ2aWNlYWNjb3VudC5jb20ifQ==")))
         sheet = client.open("Chromebook Tracker").worksheet(f"SF{room}")
 
         try:
@@ -177,6 +166,3 @@ if __name__ == "__main__":
             print(f"Something went wrong. Exception:\n\t{type(e).__name__} --> {e}")
             input("Press ENTER to exit...")
             exit(4)
-
-    input("Finished! Press ENTER to exit...")
-    exit(0)

@@ -14,13 +14,13 @@ if ans == "y":
         print("Running on Linux! Time to install and build.")
         sp.call("venv/bin/python -m pip install --upgrade pip".split())
         sp.call("venv/bin/pip install -r resources/requirements.txt".split())
-        sp.call("venv/bin/pyinstaller main.py".split())
+        sp.call("venv/bin/pyinstaller main.py -y".split())
 
     elif device == "Windows":
         print("Running on Windows! Time to install and build.")
         sp.call(r".\venv\Scripts\python.exe -m pip install --upgrade pip".split())
         sp.call(r".\venv\Scripts\pip.exe install -r .\resources\requirements.txt".split())
-        sp.call(r".\venv\Scripts\pyinstaller.exe main.py".split())
+        sp.call(r".\venv\Scripts\pyinstaller.exe main.py -y".split())
 
     elif device == "Darwin":
         print("Running on MacOS. Attempting with Linux commands...")
@@ -28,7 +28,7 @@ if ans == "y":
             print("Time to install and build.")
             sp.call("venv/bin/python -m pip install --upgrade pip".split())
             sp.call("venv/bin/pip install -r resources/requirements.txt".split())
-            sp.call("venv/bin/pyinstaller main.py".split())
+            sp.call("venv/bin/pyinstaller main.py -y".split())
 
         except Exception as e:
             print("Well that didn't work. Send an email to 21laforgth@gmail.com so he can add support for MacOS.")
