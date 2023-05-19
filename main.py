@@ -160,7 +160,7 @@ if __name__ == "__main__":
             sheet.update(f"B{last_row}", sheet.acell(status_cells[chromebook]).value)
             sheet.update(f"C{last_row}", name)
             sheet.update(f"D{last_row}", f"{'{:02d}'.format(date.month)}/{'{:02d}'.format(date.day)}/{'{:02d}'.format(date.year)}")
-            sheet.update(f"E{last_row}", f"{date.hour}:{date.minute}:{date.second}")
+            sheet.update(f"E{last_row}", f"{'{:02d}'.format(date.hour)}:{'{:02d}'.format(date.minute)}:{'{:02d}'.format(date.second)}")
 
         except Exception as e:
             print(f"Something went wrong. Exception:\n\t{type(e).__name__} --> {e}")
