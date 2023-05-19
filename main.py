@@ -159,7 +159,7 @@ if __name__ == "__main__":
             sheet.update(f"A{last_row}", chromebook)
             sheet.update(f"B{last_row}", sheet.acell(status_cells[chromebook]).value)
             sheet.update(f"C{last_row}", name)
-            sheet.update(f"D{last_row}", f"{date.month}/{date.day}/{date.year}")
+            sheet.update(f"D{last_row}", f"{'{:02d}'.format(date.month)}/{'{:02d}'.format(date.day)}/{'{:02d}'.format(date.year)}")
             sheet.update(f"E{last_row}", f"{date.hour}:{date.minute}:{date.second}")
 
         except Exception as e:
