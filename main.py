@@ -119,8 +119,8 @@ if __name__ == "__main__":
         input("Press ENTER to exit...")
         exit(2)
 
-    status_cells = {f"SF{room}-1": "H2", f"SF{room}-2": "H3", f"SF{room}-3": "H4", f"SF{room}-4": "H5",
-                    f"SF{room}-5": "H6", f"SF{room}-6": "H7"}
+    status_cells = {f"SF{room}-{i}": f"H{i + 1}" for i in range(1, 7, 1)}
+    status_cells.update({f"SFRED-{i}": f"H{i + 7}" for i in range(1, 33, 1)})
     status_rev = {"OUT": "IN", "IN": "OUT"}
     temps_dict = {f"student{i + 1}": val.split(":")[1].strip() for i, val in enumerate(temps)}
     decrypt = read_json("../../resources/validation.json")
@@ -143,7 +143,7 @@ if __name__ == "__main__":
 
         try:
             # Try this method to search for dates (hopefully faster).
-            last_row = sheet.findall(f"{date.month}/{date.day}/{date.year}")[-1].row + 1
+            last_row = sheet.findall(f"{'{:02d}'.format(date.month)}/{'{:02d}'.format(date.day)}/{'{:02d}'.format(date.year)}")[-1].row + 1
 
         except IndexError:
             # Use this method as a backup. Gets a list of all elements in a column and gets the length.
