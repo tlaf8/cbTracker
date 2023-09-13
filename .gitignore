@@ -5,5 +5,7 @@ __pycache__/
 build/
 dist/
 main.spec
-reader.py
-windows.zip
+gspread_auth.txt
+resources/outputs
+resources/names.txt
+resources/outputs/validation.json

@@ -1,11 +1,15 @@
 import subprocess as sp
 from platform import system
 from sys import exit
-from time import sleep
+
+print("This file is deprecated!")
+print("If you would like to compile, remove the 3 quotation marks and run the file itself.")
+print("No guarantees that this will run. It is better to make a shortcut to run python command.")
+
+"""
 
 ans = input("This program will install all necessary packages and build the project. Continue? (y/N) ")
-if ans == "y":
-    print("Get ready to see a lot of text!")
+if ans.lower() == "y":
     print("Creating virtual environment...")
     sp.call("python -m venv venv".split(" "))
 
@@ -42,3 +46,5 @@ if ans == "y":
 else:
     print("Aborting.")
     exit(0)
+    
+"""
