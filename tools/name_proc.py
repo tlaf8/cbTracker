@@ -28,9 +28,10 @@ with open("../resources/names.txt", "r") as file:
 path = ""
 for num, entry in enumerate(classes):
     # Create key value pairs with names as key and sha256 encoded values as value
+    secret = input("Enter secret to encode with: ")
     res = dict(zip(
         entry[1::],
-        [hl.sha256("paws".join(name.split(" ")).strip().encode()).hexdigest() for name in entry]
+        [hl.sha256(secret.join(name.split(" ")).strip().encode()).hexdigest() for name in entry]
     ))
 
     # Check if the 'outputs' directory exists
