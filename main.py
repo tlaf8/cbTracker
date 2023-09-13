@@ -78,6 +78,30 @@ def obtain_auth() -> str:
             print("GSpread authentication could not be found. Please contact 21laforgth@gmail.com.")
 
 
+def update_sheet(sheet_obj: gspread.worksheet.Worksheet, cb_id: str, student: str) -> None:
+    try:
+        cb = status_cells[cb_id]
+        sheet_obj.update_cell(cb[1], cb[0], status_rev[sheet_obj.cell(cb[1], cb[0]).value])
+        sheet_obj.update_cell(last_row, 1, cb_id)
+        sheet_obj.update_cell(last_row, 2, sheet_obj.cell(cb[1], cb[0]).value)
+        sheet_obj.update_cell(last_row, 3, student)
+        sheet_obj.update_cell(
+            last_row,
+            4,
+            f"{'{:02d}'.format(date.month)}/{'{:02d}'.format(date.day)}/{'{:02d}'.format(date.year)}"
+        )
+        sheet_obj.update_cell(
+            last_row,
+            5,
+            f"{'{:02d}'.format(date.hour)}:{'{:02d}'.format(date.minute)}:{'{:02d}'.format(date.second)}"
+        )
+
+    except Exception as e:
+        print(f"Something went wrong. Exception:\n\t{type(e).__name__} --> {e}")
+        cv2.destroyAllWindows()
+        exit(4)
+
+
 if __name__ == "__main__":
     verbose = False if input("Run in verbose mode? (y/n) ") == "n" else True
 
@@ -108,11 +132,11 @@ if __name__ == "__main__":
         input("Press ENTER to exit...")
         exit(3)
 
-    status_cells = {f"SF{room}-{i}": f"H{i + 1}" for i in range(1, 7, 1)}
-    status_cells.update({f"SFRED-{i}": f"H{i + 7}" for i in range(1, 33, 1)})
+    status_cells = {f"SF{room}-{i}": f"8{i + 1}" for i in range(1, 7, 1)}
+    status_cells.update({f"SFRED-{i}": f"8{i + 7}" for i in range(1, 33, 1)})
     status_rev = {"OUT": "IN", "IN": "OUT"}
     temps_dict = {f"student{i + 1}": val.split(":")[1].strip() for i, val in enumerate(temps)}
-    decrypt = {v: k for k, v in read_file("resources/outputs/validation.json").items()}
+    decrypt = {v: k for k, v in read_file("./resources/outputs/validation.json").items()}
     date = datetime.today()
 
     if verbose is True:
@@ -149,23 +173,5 @@ if __name__ == "__main__":
         if encoded in temps_dict:
             encoded = temps_dict[encoded]
 
-        name = decrypt[encoded]
+        update_sheet(sheet, chromebook, decrypt[encoded])
 
-        try:
-            sheet.update(status_cells[chromebook], status_rev[sheet.acell(status_cells[chromebook]).value])
-            sheet.update(f"A{last_row}", chromebook)
-            sheet.update(f"B{last_row}", sheet.acell(status_cells[chromebook]).value)
-            sheet.update(f"C{last_row}", name)
-            sheet.update(
-                f"D{last_row}",
-                f"{'{:02d}'.format(date.month)}/{'{:02d}'.format(date.day)}/{'{:02d}'.format(date.year)}"
-            )
-            sheet.update(
-                f"E{last_row}",
-                f"{'{:02d}'.format(date.hour)}:{'{:02d}'.format(date.minute)}:{'{:02d}'.format(date.second)}"
-            )
-
-        except Exception as e:
-            print(f"Something went wrong. Exception:\n\t{type(e).__name__} --> {e}")
-            input("Press ENTER to exit...")
-            exit(4)
