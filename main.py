@@ -64,6 +64,20 @@ def read_code(message: str) -> str:
             exit(0)
 
 
+def obtain_auth() -> str:
+    try:
+        with open("./gspread_auth.txt", "r") as auth:
+            return auth.readlines()[0].strip()
+
+    except FileNotFoundError:
+        try:
+            with open("../resources/gspread_auth.txt", "r") as auth:
+                return auth.readlines()[0].strip()
+
+        except FileNotFoundError:
+            print("GSpread authentication could not be found. Please contact 21laforgth@gmail.com.")
+
+
 if __name__ == "__main__":
     verbose = False if input("Run in verbose mode? (y/n) ") == "n" else True
 
@@ -104,23 +118,24 @@ if __name__ == "__main__":
     if verbose is True:
         print("Starting gspread client")
 
-    client = gspread.service_account_from_dict(json.loads(b64decode(read_file("gspread_auth.txt")[0])))
+    client = gspread.service_account_from_dict(json.loads(b64decode(obtain_auth())))
     sheet = client.open("Chromebook Tracker").worksheet(f"SF{room}")
-
-    try:
-        # Try this method to search for dates (hopefully faster).
-        last_row = sheet.findall(
-            f"{'{:02d}'.format(date.month)}/{'{:02d}'.format(date.day)}/{'{:02d}'.format(date.year)}"
-        )[-1].row + 1
-
-    except IndexError:
-        # Use this method as a backup. Gets a list of all elements in a column and gets the length.
-        last_row = len(sheet.col_values(1)) + 1
 
     if verbose is True:
         print("Opening camera")
 
     while True:
+        # try:
+        #     # Try this method to search for dates (hopefully faster).
+        #     last_row = sheet.findall(
+        #         f"{'{:02d}'.format(date.month)}/{'{:02d}'.format(date.day)}/{'{:02d}'.format(date.year)}"
+        #     )[-1].row + 1
+        #
+        # except IndexError:
+        #     # Use this method as a backup. Gets a list of all elements in a column and gets the length.
+        #     last_row = len(sheet.col_values(1)) + 1
+
+        last_row = len(sheet.col_values(1)) + 1
         chromebook = read_code("Please show chromebook")
         encoded = read_code("Please show ID")
 
