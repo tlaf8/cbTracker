@@ -2,7 +2,6 @@ import gspread
 import json
 import sys
 from base64 import b64decode
-from datetime import datetime
 from time import sleep
 from common import obtain_auth
 from concurrent.futures import ThreadPoolExecutor
@@ -17,17 +16,17 @@ def update_sheet(cb_log: list) -> None:
     lr = cb_log[6]
     status = cb_log[7]
 
-    # try:
-    sheet.update_cell(status[1], status[0], log_status)
-    sheet.update_cell(lr, 1, cb_id)
-    sheet.update_cell(lr, 2, log_status)
-    sheet.update_cell(lr, 3, student)
-    sheet.update_cell(lr, 4, log_date)
-    sheet.update_cell(lr, 5, log_time)
+    try:
+        sheet.update_cell(status[1], status[0], log_status)
+        sheet.update_cell(lr, 1, cb_id)
+        sheet.update_cell(lr, 2, log_status)
+        sheet.update_cell(lr, 3, student)
+        sheet.update_cell(lr, 4, log_date)
+        sheet.update_cell(lr, 5, log_time)
 
-    # except Exception as e:
-    #     print(f"Something went wrong. Exception:\n\t{type(e).__name__} --> {e}")
-    #     exit(4)
+    except Exception as e:
+        print(f"Something went wrong. Exception:\n\t{type(e).__name__} --> {e}")
+        exit(4)
 
 
 if __name__ == '__main__':
