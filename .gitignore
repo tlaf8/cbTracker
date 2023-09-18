@@ -5,7 +5,7 @@ __pycache__/
 build/
 dist/
 main.spec
-gspread_auth.txt
-resources/outputs
+resources/gspread_auth.txt
+resources/validations
 resources/names.txt
-resources/outputs/validation.json
+resources/validations/*.json

@@ -34,21 +34,21 @@ for num, entry in enumerate(classes):
         [hl.sha256(secret.join(name.split(" ")).strip().encode()).hexdigest() for name in entry]
     ))
 
-    # Check if the 'outputs' directory exists
-    if not exists("../resources/outputs"):
-        mkdir("../resources/outputs")
+    # Check if the 'validations' directory exists
+    if not exists("../resources/validations"):
+        mkdir("../resources/validations")
 
     # Finally write to separate files for organization
-    with open(f"../resources/outputs/validation_{entry[0][2::]}.json", "w") as out:
+    with open(f"../resources/validations/validation_{entry[0][2::]}.json", "w") as out:
         json.dump(res, out, indent=4)
 
 if COMPILE_ALL is True:
     compiled = dict()
-    for filename in next(walk("../resources/outputs"))[2]:
-        with open(f"../resources/outputs/{filename}", "r") as temp:
+    for filename in next(walk("../resources/validations"))[2]:
+        with open(f"../resources/validations/{filename}", "r") as temp:
             compiled.update(json.load(temp))
 
-    with open("../resources/outputs/validation.json", "w") as out:
+    with open("../resources/validations/validation.json", "w") as out:
         json.dump(compiled, out, indent=4)
 
 
