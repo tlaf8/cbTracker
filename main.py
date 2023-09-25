@@ -13,6 +13,17 @@ VERBOSE = False
 SLEEP_TIME = 1
 
 
+def run_update() -> None:
+    print("Batch limit or force update. Starting update procedure...")
+    packaged = b64encode(" -- ".join([" | ".join(i) for i in batch]).encode()).decode()
+    final_statuses = b64encode(json.dumps(statuses).encode()).decode()
+    try:
+        sp.Popen(f"./venv/bin/python ./tools/sheet_updater.py {packaged} {final_statuses}".split())
+
+    except FileNotFoundError:
+        sp.Popen(f"./venv/Scripts/python.exe ./tools/sheet_updater.py {packaged} {final_statuses}".split())
+
+
 def read_code(message: str) -> str:
     while True:
         try:
@@ -52,7 +63,8 @@ def read_code(message: str) -> str:
         if cv2.waitKey(1) & 0xFF == ord('q'):
             cam.release()
             cv2.destroyAllWindows()
-            exit(0)
+            run_update()
+            exit("No errors occurred on main script.")
 
 
 if __name__ == "__main__":
@@ -74,14 +86,12 @@ if __name__ == "__main__":
                 room = line.split("Room number: ")[1]
 
             else:
-                print("Unexpected value found in settings. Please review the file.")
-                input("Press ENTER to exit...")
-                exit(2)
+                raise ValueError
 
     except ValueError:
-        print("Unexpected value for room number in settings.txt. Please check and run again.")
+        print("Invalid settings file. Please review and try again.")
         input("Press ENTER to exit...")
-        exit(3)
+        exit()
 
     client = gspread.service_account_from_dict(json.loads(b64decode(obtain_auth("./resources/gspread_auth.txt"))))
     sheet = client.open("Chromebook Tracker").worksheet(f"SF{room}")
@@ -127,14 +137,6 @@ if __name__ == "__main__":
             status_cells[chromebook]
         ])
 
-        if len(batch) >= 10:
-            print("Batch length reached 10. Starting update procedure...")
-            packaged = b64encode(" -- ".join([" | ".join(i) for i in batch]).encode()).decode()
-            final_statuses = b64encode(json.dumps(statuses).encode()).decode()
-            try:
-                sp.Popen(f"./venv/bin/python ./tools/sheet_updater.py {packaged} {final_statuses}".split())
-
-            except FileNotFoundError:
-                sp.Popen(f"./venv/Scripts/python.exe ./tools/sheet_updater.py {packaged} {final_statuses}".split())
-
+        if len(batch) >= 3:
+            run_update()
             batch = []
