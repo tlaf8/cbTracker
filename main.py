@@ -13,15 +13,21 @@ VERBOSE = False
 SLEEP_TIME = 1
 
 
-def run_update() -> None:
+def run_update() -> sp.Popen:
     print("Batch limit or force update. Starting update procedure...")
+    if len(batch) == 0:
+        print("No entries found in batch")
+        exit("No errors occurred on main script.")
+
     packaged = b64encode(" -- ".join([" | ".join(i) for i in batch]).encode()).decode()
     final_statuses = b64encode(json.dumps(statuses).encode()).decode()
     try:
-        sp.Popen(f"./venv/bin/python ./tools/sheet_updater.py {packaged} {final_statuses}".split())
+        task = sp.Popen(f"./venv/bin/python ./tools/sheet_updater.py {packaged} {final_statuses}".split())
 
     except FileNotFoundError:
-        sp.Popen(f"./venv/Scripts/python.exe ./tools/sheet_updater.py {packaged} {final_statuses}".split())
+        task = sp.Popen(f"./venv/Scripts/python.exe ./tools/sheet_updater.py {packaged} {final_statuses}".split())
+
+    return task
 
 
 def read_code(message: str) -> str:
@@ -54,8 +60,7 @@ def read_code(message: str) -> str:
             1,
             cv2.LINE_AA
         )
-        cv2.imshow("Scanner", frame)
-        cv2.setWindowProperty("Scanner", cv2.WND_PROP_TOPMOST, 1)
+        cv2.imshow("cbTracker", frame)
 
         if len(data) > 0:
             return data
@@ -63,14 +68,16 @@ def read_code(message: str) -> str:
         if cv2.waitKey(1) & 0xFF == ord('q'):
             cam.release()
             cv2.destroyAllWindows()
-            run_update()
+            proc = run_update()
+            while proc.poll() is None:
+                sleep(0.5)
+
             exit("No errors occurred on main script.")
 
 
 if __name__ == "__main__":
     temps = []
     room = None
-    cam = cv2.VideoCapture(0)
     reader = cv2.QRCodeDetector()
     decrypt = {v: k for k, v in read_file("./resources/validations/validation.json").items()}
 
@@ -91,7 +98,7 @@ if __name__ == "__main__":
     except ValueError:
         print("Invalid settings file. Please review and try again.")
         input("Press ENTER to exit...")
-        exit()
+        exit("Formatting error.")
 
     client = gspread.service_account_from_dict(json.loads(b64decode(obtain_auth("./resources/gspread_auth.txt"))))
     sheet = client.open("Chromebook Tracker").worksheet(f"SF{room}")
@@ -108,16 +115,20 @@ if __name__ == "__main__":
     batch = []
     statuses = get_statuses(sheet)
     while True:
+        cam = cv2.VideoCapture(0)
         chromebook = read_code("Please show chromebook")
         sleep(SLEEP_TIME)
         encoded = read_code("Please show ID")
-        sleep(SLEEP_TIME)
+        cam.release()
 
         if VERBOSE is True:
             print("Verifying inputs")
 
         if encoded not in decrypt:
             print("QR code not recognized. Please get teacher to look into this.")
+            print(f"Read: {encoded}. Restarting in 3")
+            cam.release()
+            sleep(3)
             continue
 
         if encoded in temps_dict:
