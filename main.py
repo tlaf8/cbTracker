@@ -41,4 +41,4 @@ if __name__ == "__main__":
             pass
 
         except Exception as err:
-            print(f"[ERROR]\t{err}")
+            print(f"{TC.FAIL}[ERROR]\t{err}{TC.ENDC}")

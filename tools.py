@@ -100,7 +100,7 @@ def read_code(cam: cv2.VideoCapture, decoder: cv2.QRCodeDetector,
         raw_result, _, _ = decoder.detectAndDecode(raw_frame)
         status_flip = {"IN": "OUT", "OUT": "IN"}
         if raw_frame is None:
-            print("[ERROR]\tCould not read camera")
+            print(f"{TC.FAIL}[ERROR]\t{TC.ENDC}Could not read camera")
             cv2.destroyAllWindows()
             cam.release()
             exit(1)
@@ -132,7 +132,7 @@ def read_code(cam: cv2.VideoCapture, decoder: cv2.QRCodeDetector,
                         (Thread(target=update_sheet, args=[update_interval])).start()
 
                     else:
-                        print(f"{TC.WARNING}[WARN]\tUpdate thread already running. Skipping{TC.ENDC}")
+                        print(f"{TC.WARNING}[WARN]\tUpdate thread already running. Ignoring request{TC.ENDC}")
 
             else:
                 if raw_result in hash_dict:
