@@ -1,3 +1,4 @@
+# Ripped from blender
 class TC:
     HEADER = '\033[95m'
     OKBLUE = '\033[94m'
