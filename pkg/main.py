@@ -7,7 +7,7 @@ from colouring import TC
 if __name__ == "__main__":
     break_flag = 0
     decoder = cv2.QRCodeDetector()
-    proc_img = cv2.imread("./resources/img/scan_img.jpg")
+    proc_img = cv2.imread("resources/img/scan_img.png")
     unhash: dict = read_json("./resources/data/validation.json")
     settings: dict = read_json("./resources/data/settings.json")
     chromebooks: dict = read_json("./resources/data/status.json")
@@ -36,6 +36,7 @@ if __name__ == "__main__":
             })
 
             write_json("./resources/data/batch.json", batch)
+            batch.clear()
 
         except cv2.error as err:
             pass

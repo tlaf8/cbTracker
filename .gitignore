@@ -1,8 +1,7 @@
 .idea
 __pycache__
-resources/data/api_key.json
-resources/data/validation.json
+pkg/resources/data/api_key.json
+pkg/resources/data/validation.json
 resources/data/names.txt
 resources/img/qr_codes
 venv
-resources/data/api_key.json
