@@ -1,7 +1,4 @@
-import threading
-
 from tools import *
-from threading import Thread
 from datetime import datetime
 
 
