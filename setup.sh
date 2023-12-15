@@ -1,22 +1,22 @@
 #!/bin/bash
 
-echo "seeing if $HOME/Documents/cbTracker/ exists"
+echo "--> seeing if $HOME/Documents/cbTracker/ exists"
 if [ ! -d "$HOME/Documents/cbTracker/" ]; then
   echo "does not exist. Creating"
   mkdir $HOME/Documents/cbTracker
 fi
 
-echo "copying files over"
+echo "--> copying files over"
 cp -r pkg/* $HOME/Documents/cbTracker
 
-echo "installing virtual environment and necessary libs"
+echo "--> installing virtual environment and necessary libs"
 cd $HOME/Documents/cbTracker
 python -m venv venv
 venv/bin/python -m pip install --upgrade pip
 venv/bin/pip install -r resources/requirements.txt
 
 
-echo "creating desktop shortcut"
+echo "--> creating desktop shortcut"
 
 touch $HOME/Desktop/cbTracker.desktop
 echo "" > $HOME/Desktop/cbTracker.desktop
@@ -31,4 +31,4 @@ echo "Icon=$HOME/Documents/cbTracker/resources/img/scan_img.jpg" >> $HOME/Deskto
 
 chmod +x $HOME/Desktop/cbTracker.desktop
 
-printf "\ndone\n"
+printf "\n--> done\n"
