@@ -1,45 +1,45 @@
+import threading
+
 from tools import *
-from threading import Timer
+from threading import Thread
 from datetime import datetime
-from colouring import TC
 
 
 if __name__ == "__main__":
     break_flag = 0
     decoder = cv2.QRCodeDetector()
     proc_img = cv2.imread("resources/img/scan_img.png")
-    unhash: dict = read_json("./resources/data/validation.json")
+    loading_img = cv2.imread("resources/img/loading.png")
+    decrypt: dict = read_json("./resources/data/validation.json")
     settings: dict = read_json("./resources/data/settings.json")
-    chromebooks: dict = read_json("./resources/data/status.json")
-    batch: dict | list = read_json("./resources/data/batch.json", exit_on_err=False)
-    update_queue = Timer(settings["update"], update_sheet, args=[settings["update"]])
-    update_queue.daemon = True
-    update_queue.start()
-    print(f"{TC.OKGREEN}[INFO]{TC.ENDC}\tTimer started")
+    client: gspread.service_account = gspread.service_account_from_dict(read_json("./resources/data/api_key.json"))
+    sheet: gspread.Worksheet = client.open("Chromebook Tracker").worksheet(settings["sheet"])
+    lr_status: int = len(sheet.col_values(7))
+    chromebooks: dict = dict(zip([name.value for name in sheet.range(f"G2:G{lr_status}")], sheet.range(f"H2:H{lr_status}")))
+    entry: dict = {}
     while True:
         try:
             cam = cv2.VideoCapture(0)
-            cb, action = read_code(cam, decoder, "Show Chromebook", unhash, chromebooks, proc_img, settings["update"])
+            cb, action = read_code(cam, decoder, "Show Chromebook", decrypt, chromebooks, proc_img)
             cam.release()
 
             cam = cv2.VideoCapture(0)
-            student = read_code(cam, decoder, "Show ID", unhash, chromebooks, proc_img, settings["update"])
+            student = read_code(cam, decoder, "Show ID", decrypt, chromebooks, proc_img)
             cam.release()
 
-            current_time = datetime.now()
-            batch.append({
-                "action": action,
-                "chromebook": cb,
-                "date": f"{current_time.day}/{current_time.month}/{current_time.year}",
-                "student": student,
-                "time": f"{current_time.hour}:{current_time.minute}:{current_time.second}"
-            })
+            show_proc_img(loading_img, "")
+            if cv2.waitKey(100) & 0xFF == 27:
+                pass
 
-            write_json("./resources/data/batch.json", batch)
-            batch.clear()
+            current_time = datetime.now()
+            entry["action"] = action
+            entry["chromebook"] = cb
+            entry["date"] = f"{current_time.day}/{current_time.month}/{current_time.year}"
+            entry["student"] = student
+            entry["time"] = f"{current_time.hour:02d}:{current_time.minute:02d}:{current_time.second:02d}"
+
+            update_sheet(entry, sheet)
+            chromebooks = dict(zip([name.value for name in sheet.range(f"G2:G{lr_status}")], sheet.range(f"H2:H{lr_status}")))
 
         except cv2.error as err:
             pass
-
-        except Exception as err:
-            print(f"{TC.FAIL}[ERROR]\t{err}{TC.ENDC}")
