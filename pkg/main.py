@@ -44,7 +44,6 @@ if __name__ == "__main__":
 
         except ValueError as err:
             print(f"{TC.FAIL}[ERROR]{TC.ENDC} Not scanned in correct order. Restarting")
-            cv2.destroyAllWindows()
 
             if cv2.waitKey(1000) & 0xFF == 27:
                 pass

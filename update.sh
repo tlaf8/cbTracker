@@ -21,4 +21,10 @@ yes | rm -r /tmp/cbTracker
 echo "--> moving validation and auth key back"
 mv validation.json api_key.json pkg/resources/data
 
+# Recreate virtual env
+echo "--> recreating virtual env"
+cd pkg
+python -m venv venv
+venv/bin/pip install -r resources/requirements.txt
+
 echo "--> finished"
