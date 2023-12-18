@@ -1,5 +1,6 @@
 from tools import *
 from datetime import datetime
+from colouring import TC
 
 
 if __name__ == "__main__":
@@ -40,3 +41,12 @@ if __name__ == "__main__":
 
         except cv2.error as err:
             pass
+
+        except ValueError as err:
+            print(f"{TC.FAIL}[ERROR]{TC.ENDC} Not scanned in correct order. Restarting")
+            cv2.destroyAllWindows()
+
+            if cv2.waitKey(1000) & 0xFF == 27:
+                pass
+
+            continue
