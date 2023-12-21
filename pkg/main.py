@@ -1,6 +1,12 @@
 from tools import *
 from datetime import datetime
-from colouring import TC
+
+
+class TC:
+    OK = '\033[92m'
+    WARNING = '\033[93m'
+    FAIL = '\033[91m'
+    ENDC = '\033[0m'
 
 
 if __name__ == "__main__":

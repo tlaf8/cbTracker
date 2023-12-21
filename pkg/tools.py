@@ -3,7 +3,7 @@ import time
 import cv2
 import numpy as np
 import traceback
-from colouring import TC
+from main import TC
 
 
 def read_json(path: str, exit_on_err=True) -> dict | list:
@@ -38,7 +38,7 @@ def write_json(path: str, data: dict) -> None:
         try:
             json.dump(data, f, indent=4)
 
-        except Exception:
+        except (Exception,):
             print(f"{TC.FAIL}[ERROR]{TC.ENDC}\tCould not write json. Check logs for more info")
 
             with open(f"logs/{time.strftime('%Y-%m-%d_%H%M%S')}_log.txt", "w+") as log:
@@ -48,7 +48,7 @@ def write_json(path: str, data: dict) -> None:
 
 
 def update_sheet(entry, sheet) -> None:
-    print(f"{TC.OKGREEN}[INFO]{TC.ENDC}\tUpdating sheet")
+    print(f"{TC.OK}[INFO]{TC.ENDC}\tUpdating sheet")
 
     # Go from H2 to the end of data in column H
     status_lr: int = len(sheet.col_values(8))
@@ -73,7 +73,7 @@ def update_sheet(entry, sheet) -> None:
     # Update the sheet with new values
     sheet.update_cells(list(status_cells.values()) + entry_cells)
 
-    print(f"{TC.OKGREEN}[INFO]{TC.ENDC}\tFinished updating sheet")
+    print(f"{TC.OK}[INFO]{TC.ENDC}\tFinished updating sheet")
 
 
 def show_proc_img(proc_img: np.array, msg: str) -> None:
@@ -120,11 +120,11 @@ def read_code(cam: cv2.VideoCapture, decoder: cv2.QRCodeDetector,
                 if key == ord('q'):
                     cv2.destroyAllWindows()
                     cam.release()
-                    print(f"{TC.OKGREEN}[INFO]{TC.ENDC}\tExiting")
+                    print(f"{TC.OK}[INFO]{TC.ENDC}\tExiting")
                     exit(0)
 
             else:
-                print(f"{TC.OKGREEN}[INFO]{TC.ENDC}\tRead value: {raw_result}")
+                print(f"{TC.OK}[INFO]{TC.ENDC}\tRead value: {raw_result}")
                 if raw_result in hash_dict:
                     show_proc_img(proc_img.copy(), f"Obtained: {(decrypt := hash_dict[raw_result])}")
                     if cv2.waitKey(1500) & 0xFF == 27:
