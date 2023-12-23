@@ -31,4 +31,5 @@ echo "Icon=$HOME/Documents/cbTracker/resources/img/icon.jpg" >> $HOME/Desktop/cb
 echo "--> setting execution perms"
 chmod +x $HOME/Desktop/cbTracker.desktop
 
-printf "--> done\n"
+echo "--> done"
+echo ""
