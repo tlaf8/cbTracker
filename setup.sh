@@ -7,7 +7,9 @@ if [ ! -d "$HOME/Documents/cbTracker/" ]; then
 fi
 
 echo "--> copying files over"
-cp -r pkg/* $HOME/Documents/cbTracker
+mkdir $HOME/Documents/cbTracker/pkg
+cp -r pkg/* $HOME/Documents/cbTracker/pkg
+cp update.sh $HOME/Documents/cbTracker
 
 echo "--> installing virtual environment and necessary libs"
 cd $HOME/Documents/cbTracker
@@ -30,6 +32,8 @@ echo "Icon=$HOME/Documents/cbTracker/resources/img/icon.jpg" >> $HOME/Desktop/cb
 
 echo "--> setting execution perms"
 chmod +x $HOME/Desktop/cbTracker.desktop
+chmod +x $HOME/Documents/cbTracker/pkg/run.sh
+chmod +x $HOME/Documents/cbTracker/update.sh
 
 echo "--> done"
 echo ""
