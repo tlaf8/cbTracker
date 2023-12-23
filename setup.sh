@@ -26,7 +26,7 @@ echo "Type=Application" >> $HOME/Desktop/cbTracker.desktop
 echo "Version=1.0" >> $HOME/Desktop/cbTracker.desktop
 echo "Name=cbTracker" >> $HOME/Desktop/cbTracker.desktop
 echo "Comment=" >> $HOME/Desktop/cbTracker.desktop
-echo "Exec=bash $HOME/Documents/cbTracker/run.sh" >> $HOME/Desktop/cbTracker.desktop
+echo "Exec=bash $HOME/Documents/cbTracker/pkg/run.sh" >> $HOME/Desktop/cbTracker.desktop
 echo "Terminal=true" >> $HOME/Desktop/cbTracker.desktop
 echo "Icon=$HOME/Documents/cbTracker/pkg/resources/img/icon.jpg" >> $HOME/Desktop/cbTracker.desktop
 
