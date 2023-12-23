@@ -21,7 +21,6 @@ yes | rm -r /tmp/cbTracker
 echo "--> moving validation and auth key back"
 mv validation.json api_key.json pkg/resources/data
 
-
 # Recreate virtual env
 echo "--> recreating virtual env"
 cd pkg
