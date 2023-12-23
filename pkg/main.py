@@ -1,3 +1,4 @@
+import gspread
 from tools import *
 from datetime import datetime
 
@@ -18,10 +19,10 @@ if __name__ == "__main__":
     client: gspread.service_account = gspread.service_account_from_dict(read_json("resources/data/api_key.json"))
     sheet: gspread.Worksheet = client.open("Chromebook Tracker").worksheet(settings["sheet"])
     lr_status: int = len(sheet.col_values(7))
+    entry: dict = {}
     chromebooks: dict = dict(
         zip([name.value for name in sheet.range(f"G2:G{lr_status}")], sheet.range(f"H2:H{lr_status}"))
     )
-    entry: dict = {}
 
     while True:
         try:
@@ -54,19 +55,13 @@ if __name__ == "__main__":
 
         except ValueError:
             print(f"{TC.FAIL}[ERROR]{TC.ENDC} Not scanning in right order. Check logs for more info")
-
-            with open(f"logs/{time.strftime('%Y-%m-%d_%H%M%S')}_log.txt", "w+") as log:
-                traceback.print_exc(file=log)
-
+            write_log()
             show_proc_img(loading_img, "Follow on screen instructions. Restarting")
             if cv2.waitKey(1500) & 0xFF == 27:
                 pass
 
         except Exception:
             print(f"{TC.FAIL}[FATAL]{TC.ENDC} Unknown error occurred. See logs for more details")
-
-            with open(f"logs/{time.strftime('%Y-%m-%d_%H%M%S')}_log.txt", "w+") as log:
-                traceback.print_exc(file=log)
-
+            write_log()
             exit(1)
 

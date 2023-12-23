@@ -1,9 +1,20 @@
+import os
 import json
 import time
 import cv2
 import numpy as np
 import traceback
 from main import TC
+
+
+def write_log() -> None:
+    try:
+        with open(f"logs/{time.strftime('%Y-%m-%d_%H%M%S')}_log.txt", "w+") as log:
+            traceback.print_exc(file=log)
+
+    except FileNotFoundError:
+        os.mkdir("logs")
+        write_log()
 
 
 def read_json(path: str, exit_on_err=True) -> dict | list:
@@ -13,19 +24,13 @@ def read_json(path: str, exit_on_err=True) -> dict | list:
 
     except FileNotFoundError:
         print(f"{TC.FAIL}[ERROR]{TC.ENDC}\tFile {path} could not be found. Check logs for more info")
-
-        with open(f"logs/{time.strftime('%Y-%m-%d_%H%M%S')}_log.txt", "w+") as log:
-            traceback.print_exc(file=log)
-
+        write_log()
         exit(1)
 
     except json.JSONDecodeError:
         if exit_on_err:
             print(f"{TC.FAIL}[ERROR]{TC.ENDC}\tFile {path} invalid or empty. Check logs for more info")
-
-            with open(f"logs/{time.strftime('%Y-%m-%d_%H%M%S')}_log.txt", "w+") as log:
-                traceback.print_exc(file=log)
-
+            write_log()
             exit(1)
 
         else:
@@ -40,10 +45,7 @@ def write_json(path: str, data: dict) -> None:
 
         except (Exception,):
             print(f"{TC.FAIL}[ERROR]{TC.ENDC}\tCould not write json. Check logs for more info")
-
-            with open(f"logs/{time.strftime('%Y-%m-%d_%H%M%S')}_log.txt", "w+") as log:
-                traceback.print_exc(file=log)
-
+            write_log()
             exit(1)
 
 
@@ -92,10 +94,7 @@ def read_code(cam: cv2.VideoCapture, decoder: cv2.QRCodeDetector,
         status_flip = {"IN": "OUT", "OUT": "IN"}
         if raw_frame is None:
             print(f"{TC.FAIL}[ERROR]{TC.ENDC}\tCould not read camera")
-
-            with open(f"logs/{time.strftime('%Y-%m-%d_%H%M%S')}_log.txt", "w+") as log:
-                traceback.print_exc(file=log)
-
+            write_log()
             cv2.destroyAllWindows()
             cam.release()
             exit(1)

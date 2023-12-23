@@ -2,7 +2,7 @@
 
 echo "--> seeing if $HOME/Documents/cbTracker/ exists"
 if [ ! -d "$HOME/Documents/cbTracker/" ]; then
-  echo "does not exist. Creating"
+  echo "----> does not exist. Creating"
   mkdir $HOME/Documents/cbTracker
 fi
 
@@ -17,7 +17,6 @@ venv/bin/pip install -r resources/requirements.txt
 
 
 echo "--> creating desktop shortcut"
-
 touch $HOME/Desktop/cbTracker.desktop
 echo "" > $HOME/Desktop/cbTracker.desktop
 echo "[Desktop Entry]" >> $HOME/Desktop/cbTracker.desktop
@@ -27,8 +26,9 @@ echo "Name=cbTracker" >> $HOME/Desktop/cbTracker.desktop
 echo "Comment=" >> $HOME/Desktop/cbTracker.desktop
 echo "Exec=bash $HOME/Documents/cbTracker/run.sh" >> $HOME/Desktop/cbTracker.desktop
 echo "Terminal=true" >> $HOME/Desktop/cbTracker.desktop
-echo "Icon=$HOME/Documents/cbTracker/resources/img/scan_img.jpg" >> $HOME/Desktop/cbTracker.desktop
+echo "Icon=$HOME/Documents/cbTracker/resources/img/icon.jpg" >> $HOME/Desktop/cbTracker.desktop
 
+echo "--> setting execution perms"
 chmod +x $HOME/Desktop/cbTracker.desktop
 
-printf "\n--> done\n"
+printf "--> done\n"
