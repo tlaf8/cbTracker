@@ -219,7 +219,7 @@ def create_qr_codes(path_out: str, fuzz: str = None):
 
 
 if __name__ == "__main__":
-    print("This file only contains helper functions and is useless generating qr codes.")
+    print("This file only contains helper functions and is useless unless generating qr codes.")
     match input("Create QR codes? (y/n) ").lower():
         case 'y':
             modifier = input("Enter desired name modifier (Leave blank for none): ")
