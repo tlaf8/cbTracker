@@ -3,24 +3,17 @@ from tools import *
 from datetime import datetime
 
 
-class TC:
-    OK = '\033[92m'
-    WARNING = '\033[93m'
-    FAIL = '\033[91m'
-    ENDC = '\033[0m'
-
-
 if __name__ == "__main__":
     decoder: cv2.QRCodeDetector = cv2.QRCodeDetector()
     proc_img: np.array = cv2.imread("resources/img/scan_img.png")
     loading_img: np.array = cv2.imread("resources/img/loading.png")
-    decrypt: dict = read_json("resources/data/validation.json")
-    settings: dict = read_json("resources/data/settings.json")
+    decrypt = read_json("resources/data/validation.json")
+    settings = read_json("resources/data/settings.json")
     client: gspread.service_account = gspread.service_account_from_dict(read_json("resources/data/api_key.json"))
     sheet: gspread.Worksheet = client.open("Chromebook Tracker").worksheet(settings["sheet"])
-    lr_status: int = len(sheet.col_values(7))
-    entry: dict = {}
-    chromebooks: dict = dict(
+    lr_status = len(sheet.col_values(7))
+    entry = {}
+    chromebooks = dict(
         zip([name.value for name in sheet.range(f"G2:G{lr_status}")], sheet.range(f"H2:H{lr_status}"))
     )
 
@@ -64,4 +57,3 @@ if __name__ == "__main__":
             print(f"{TC.FAIL}[FATAL]{TC.ENDC} Unknown error occurred. See logs for more details")
             write_log()
             exit(1)
-
