@@ -143,8 +143,24 @@ def read_code(cam: cv2.VideoCapture, decoder: cv2.QRCodeDetector,
                 if key == ord('q'):
                     cv2.destroyAllWindows()
                     cam.release()
-                    print(f"{TC.OK}[INFO]{TC.ENDC}\tExiting")
+                    print(f"{TC.OK}[INFO]{TC.ENDC} Exiting")
                     exit(0)
+
+                elif key == ord('U'):
+                    cv2.destroyAllWindows()
+                    cam.release()
+                    match input("Check for updates? (y/n) ").lower():
+                        case 'y':
+                            print(f"{TC.OK}[INFO]{TC.ENDC} Running update")
+                            exit(0)
+
+                        case 'n':
+                            print(f"{TC.OK}[INFO]{TC.ENDC} Abort")
+                            continue
+
+                        case _:
+                            print(f"{TC.OK}[INFO]{TC.ENDC} Unknown key. Aborting")
+                            continue
 
             else:
                 print(f"{TC.OK}[INFO]{TC.ENDC}\tRead value: {raw_result}")
