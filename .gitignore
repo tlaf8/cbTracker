@@ -2,7 +2,6 @@
 __pycache__
 pkg/resources/data/api_key.json
 pkg/resources/data/validation.json
-pkg/logs/*
 venv
 lily.py
 poster.py
