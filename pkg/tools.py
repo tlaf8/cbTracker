@@ -2,11 +2,15 @@ import os
 import json
 import time
 import cv2
+import base64
+import requests
+import traceback
 import numpy as np
 import qrcode as qr
-import traceback
 from PIL import Image, ImageDraw, ImageFont
 from hashlib import sha256
+
+from random import randint
 
 
 class TC:
@@ -178,6 +182,34 @@ def read_code(cam: cv2.VideoCapture, decoder: cv2.QRCodeDetector,
                     return raw_result, action
 
 
+def get_files(pwd: str) -> tuple[str, dict, dict]:
+    returned = requests.post("https://tryobgwrhsrnbyq5re77znzxry0brhfc.lambda-url.ca-central-1.on.aws/",
+                             data={"pass": sha256(pwd.encode()).hexdigest()}).content.decode("utf-8")
+
+    content = json.loads(returned)
+    return "Ok", json.loads(content["api_key"]), json.loads(content["validation"])
+
+
+def upload_data(data: dict) -> str:
+    params = {
+        "pass": sha256("sfjhcbtracker2024".encode()).hexdigest(),
+        "data": base64.urlsafe_b64encode(json.dumps(data).encode())
+    }
+
+    resp = requests.post("https://i5nqbfht5a6v4epzr5anistot40qkyaz.lambda-url.ca-central-1.on.aws/", data=params)
+    return resp.content.decode("utf-8")
+
+
+def sync_local():
+    result, api_key, validation = get_files(input("Enter key: "))
+    write_json("resources/data/api_key.json", api_key)
+    write_json("resources/data/validation.json", validation)
+
+
+def sync_cloud():
+    upload_data(read_json("resources/data/validation.json", exit_on_err=True))
+
+
 def create_qr_codes(path_out: str, fuzz: str = None):
     filenames = []
     font = ImageFont.truetype("resources/data/RobotoMono-Regular.ttf", size=16)
@@ -223,6 +255,7 @@ def create_qr_codes(path_out: str, fuzz: str = None):
 
             validation_json[data] = stripped
             write_json("resources/data/validation.json", validation_json)
+            upload_data(validation_json)
 
         else:
             qr.make(stripped).save(f"{path_out}/{stripped}.png")
@@ -236,7 +269,7 @@ def create_qr_codes(path_out: str, fuzz: str = None):
 
 if __name__ == "__main__":
     print("This file only contains helper functions and is useless unless generating qr codes.")
-    match input("Create QR codes? (y/n) ").lower():
+    match input("Create QR codes? (y/n/s) ").lower():
         case 'y':
             modifier = input("Enter desired name modifier (Leave blank for none): ")
             if (output_path := input("Enter output path (Leave blank for default): ").lower()) != "":
@@ -246,6 +279,12 @@ if __name__ == "__main__":
 
         case 'n':
             exit(0)
+
+        case 's':
+            sync_local()
+            print("Finished syncing local machine")
+            sync_cloud()
+            print("Finished syncing AWS")
 
         case _:
             print("Invalid option. Exiting")
