@@ -9,8 +9,7 @@ import numpy as np
 import qrcode as qr
 from PIL import Image, ImageDraw, ImageFont
 from hashlib import sha256
-
-from random import randint
+# from getpass import getpass
 
 
 class TC:
@@ -18,6 +17,7 @@ class TC:
     WARNING = '\033[93m'
     FAIL = '\033[91m'
     ENDC = '\033[0m'
+    HELP = '\033[36m'
 
 
 def write_log() -> None:
@@ -53,7 +53,18 @@ def read_json(path: str, exit_on_err=True) -> dict | list:
     except FileNotFoundError:
         print(f"{TC.FAIL}[ERROR]{TC.ENDC}\tFile {path} could not be found. Check logs for more info")
         write_log()
-        exit(1)
+
+        if "validation.json" in path or "api_key.json" in path:
+            if input(f"{TC.HELP}[HELP]{TC.ENDC} Looks like {path} is missing. Download it? (y/n) ").lower() == "y":
+                sync_local()
+                print(f"{TC.OK}[INFO]{TC.ENDC} Files downloaded successfully. Please restart the program.")
+                exit(0)
+
+            else:
+                exit(0)
+
+        else:
+            exit(1)
 
     except json.JSONDecodeError:
         if exit_on_err:
@@ -75,6 +86,27 @@ def write_json(path: str, data: dict) -> None:
             print(f"{TC.FAIL}[ERROR]{TC.ENDC}\tCould not write json. Check logs for more info")
             write_log()
             exit(1)
+
+
+def sync_local():
+    result, api_key, validation = get_files()
+
+    if result != "Unauthorized: Bad password":
+        write_json("resources/data/api_key.json", api_key)
+        write_json("resources/data/validation.json", validation)
+
+    elif result == "Unauthorized: Bad password":
+        print(f"{TC.FAIL}[ERROR]{TC.ENDC} Bad password.")
+        exit(1)
+
+    else:
+        print(f"{TC.FAIL}[ERROR]{TC.ENDC} Something went wrong, check logs for more info.")
+        write_log()
+        exit(1)
+
+
+def sync_cloud():
+    upload_data(read_json("resources/data/validation.json", exit_on_err=True))
 
 
 def update_sheet(entry, sheet) -> None:
@@ -182,32 +214,27 @@ def read_code(cam: cv2.VideoCapture, decoder: cv2.QRCodeDetector,
                     return raw_result, action
 
 
-def get_files(pwd: str) -> tuple[str, dict, dict]:
+def get_files() -> tuple[str, dict, dict] | str:
     returned = requests.post("https://tryobgwrhsrnbyq5re77znzxry0brhfc.lambda-url.ca-central-1.on.aws/",
-                             data={"pass": sha256(pwd.encode()).hexdigest()}).content.decode("utf-8")
+                             data={"pass": sha256(input("Enter key: ").encode()).hexdigest()}).content.decode("utf-8")
 
-    content = json.loads(returned)
-    return "Ok", json.loads(content["api_key"]), json.loads(content["validation"])
+    if returned != "Unauthorized: Bad password":
+        content = json.loads(returned)
+        return "Ok", json.loads(content["api_key"]), json.loads(content["validation"])
+
+    else:
+        print(f"{TC.FAIL}[ERROR]{TC.ENDC} Bad password")
+        exit(1)
 
 
 def upload_data(data: dict) -> str:
     params = {
-        "pass": sha256("sfjhcbtracker2024".encode()).hexdigest(),
+        "pass": sha256(input("Enter key: ").encode()).hexdigest(),
         "data": base64.urlsafe_b64encode(json.dumps(data).encode())
     }
 
     resp = requests.post("https://i5nqbfht5a6v4epzr5anistot40qkyaz.lambda-url.ca-central-1.on.aws/", data=params)
     return resp.content.decode("utf-8")
-
-
-def sync_local():
-    result, api_key, validation = get_files(input("Enter key: "))
-    write_json("resources/data/api_key.json", api_key)
-    write_json("resources/data/validation.json", validation)
-
-
-def sync_cloud():
-    upload_data(read_json("resources/data/validation.json", exit_on_err=True))
 
 
 def create_qr_codes(path_out: str, fuzz: str = None):
@@ -281,10 +308,13 @@ if __name__ == "__main__":
             exit(0)
 
         case 's':
-            sync_local()
-            print("Finished syncing local machine")
-            sync_cloud()
-            print("Finished syncing AWS")
+            if input("Sync local? (y/n) ").lower() == "y":
+                sync_local()
+                print("Finished syncing local machine")
+
+            if input("Sync AWS? (y/n) ").lower() == "y":
+                sync_cloud()
+                print("Finished syncing AWS")
 
         case _:
             print("Invalid option. Exiting")

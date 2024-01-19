@@ -53,7 +53,7 @@ if __name__ == "__main__":
             if cv2.waitKey(1500) & 0xFF == 27:
                 pass
 
-        except Exception:
+        except (Exception,):
             print(f"{TC.FAIL}[FATAL]{TC.ENDC} Unknown error occurred. See logs for more details")
             write_log()
             exit(1)
