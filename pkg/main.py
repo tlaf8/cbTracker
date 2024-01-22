@@ -4,7 +4,7 @@ from datetime import datetime
 
 
 if __name__ == "__main__":
-    print(f"{TC.OK}[INFO]{TC.ENDC} Setting things up")
+    print(f"{TC.OK}[INFO]{TC.ENDC}\tSetting things up")
 
     # variables
     entry: dict = {}
