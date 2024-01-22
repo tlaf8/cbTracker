@@ -5,19 +5,20 @@ import cv2
 import base64
 import requests
 import traceback
-import numpy as np
 import qrcode as qr
 from PIL import Image, ImageDraw, ImageFont
 from hashlib import sha256
+
+
 # from getpass import getpass
 
 
 class TC:
     OK = '\033[92m'
-    WARNING = '\033[93m'
     FAIL = '\033[91m'
     ENDC = '\033[0m'
     HELP = '\033[36m'
+    WARNING = '\033[93m'
 
 
 def write_log() -> None:
@@ -32,17 +33,7 @@ def write_log() -> None:
 
 def read_txt(path: str) -> tuple[list[str], list[str]]:
     with open(path, 'r') as file_in:
-        content = []
-        comments = []
-
-        for line in file_in:
-            if '#' in line:
-                comments.append(line)
-
-            else:
-                content.append(line)
-
-    return content, comments
+        return [line for line in file_in if '#' not in line], [line for line in file_in if '#' in line]
 
 
 def read_json(path: str, exit_on_err=True) -> dict | list:
@@ -55,9 +46,9 @@ def read_json(path: str, exit_on_err=True) -> dict | list:
         write_log()
 
         if "validation.json" in path or "api_key.json" in path:
-            if input(f"{TC.HELP}[HELP]{TC.ENDC} Looks like {path} is missing. Download it? (y/n) ").lower() == "y":
+            if input(f"{TC.HELP}[HELP]{TC.ENDC}\tLooks like {path} is missing. Download it? (y/n) ").lower() == "y":
                 sync_local()
-                print(f"{TC.OK}[INFO]{TC.ENDC} Files downloaded successfully. Please restart the program.")
+                print(f"{TC.OK}[INFO]{TC.ENDC}\tFiles downloaded successfully. Please restart the program.")
                 exit(0)
 
             else:
@@ -88,7 +79,7 @@ def write_json(path: str, data: dict) -> None:
             exit(1)
 
 
-def sync_local():
+def sync_local() -> None:
     result, api_key, validation = get_files()
 
     if result != "Unauthorized: Bad password":
@@ -96,17 +87,13 @@ def sync_local():
         write_json("resources/data/validation.json", validation)
 
     elif result == "Unauthorized: Bad password":
-        print(f"{TC.FAIL}[ERROR]{TC.ENDC} Bad password.")
+        print(f"{TC.FAIL}[ERROR]{TC.ENDC}\tBad password.")
         exit(1)
 
     else:
-        print(f"{TC.FAIL}[ERROR]{TC.ENDC} Something went wrong, check logs for more info.")
+        print(f"{TC.FAIL}[ERROR]{TC.ENDC}\tSomething went wrong, check logs for more info.")
         write_log()
         exit(1)
-
-
-def sync_cloud():
-    upload_data(read_json("resources/data/validation.json", exit_on_err=True))
 
 
 def update_sheet(entry, sheet) -> None:
@@ -114,40 +101,42 @@ def update_sheet(entry, sheet) -> None:
 
     # Go from H2 to the end of data in column H
     status_lr = len(sheet.col_values(8))
-    status_cells = dict(
-        zip([name.value for name in sheet.range(f"G2:G{status_lr}")], sheet.range(f"H2:H{status_lr}"))
-    )
+    status_cells = dict(zip([name.value for name in sheet.range(f"G2:G{status_lr}")], sheet.range(f"H2:H{status_lr}")))
 
-    # Grab last row + 1 from A to E
+    # Grab last row + 1 from A to E, using A as search column
     data_lr = len(sheet.col_values(1))
     entry_cells = sheet.range(f"A{data_lr + 1}:E{data_lr + 1}")
 
     # Set status cell value
-    status_cells[entry["chromebook"]].value = entry["action"]
+    status_cells[entry["device"]].value = entry["action"]
 
     # Set values to data given in entry accordingly
-    entry_cells[0].value = entry["chromebook"]
+    entry_cells[0].value = entry["device"]
     entry_cells[1].value = entry["action"]
     entry_cells[2].value = entry["student"]
     entry_cells[3].value = entry["date"]
     entry_cells[4].value = entry["time"]
 
-    # Update the sheet with new values
+    # Update the cb_sheet with new values
     sheet.update_cells(list(status_cells.values()) + entry_cells)
 
     print(f"{TC.OK}[INFO]{TC.ENDC}\tFinished updating sheet")
 
 
-def show_proc_img(proc_img: np.array, msg: str) -> None:
-    img = cv2.putText(proc_img.copy(), msg,
-                      [10, 30], cv2.FONT_HERSHEY_DUPLEX, 0.75,
-                      [0, 0, 0], 1, cv2.LINE_AA)
+def show_proc_img(img_path: str, msg: str = "") -> None:
+    img = cv2.putText(img=cv2.imread(img_path),
+                      text=msg,
+                      org=[10, 30],
+                      fontFace=cv2.FONT_HERSHEY_DUPLEX,
+                      fontScale=0.75,
+                      color=[0, 0, 0],
+                      thickness=1,
+                      lineType=cv2.LINE_AA)
     cv2.imshow("Scanner", img)
 
 
-def read_code(cam: cv2.VideoCapture, decoder: cv2.QRCodeDetector,
-              msg: str, hash_dict: dict, status_dict: dict,
-              proc_img: np.array) -> str | tuple[str, str]:
+def read_code(cam: cv2.VideoCapture, decoder: cv2.QRCodeDetector, msg: str, hash_dict: dict, status_dict: dict) -> str | tuple[str, str]:
+    settings = read_json("resources/data/settings.json")
     while True:
         _, raw_frame = cam.read()
         raw_result, _, _ = decoder.detectAndDecode(raw_frame)
@@ -160,18 +149,27 @@ def read_code(cam: cv2.VideoCapture, decoder: cv2.QRCodeDetector,
             exit(1)
 
         else:
-            settings = read_json("resources/data/settings.json")
             if raw_result == "":
                 frame = cv2.flip(raw_frame, 1)
 
                 cv2.namedWindow("Scanner", flags=cv2.WINDOW_GUI_NORMAL)
                 cv2.resizeWindow("Scanner", settings["window x"], settings["window y"])
-                cv2.putText(frame, msg,
-                            [10, 30], cv2.FONT_HERSHEY_DUPLEX, 0.75,
-                            [0, 0, 0], 1, cv2.LINE_AA)
-                cv2.putText(frame, "Press 'q' to quit",
-                            [10, 60], cv2.FONT_HERSHEY_DUPLEX, 0.75,
-                            [0, 0, 0], 1, cv2.LINE_AA)
+                cv2.putText(img=frame,
+                            text=msg,
+                            org=[10, 30],
+                            fontFace=cv2.FONT_HERSHEY_DUPLEX,
+                            fontScale=0.75,
+                            color=[0, 0, 0],
+                            thickness=1,
+                            lineType=cv2.LINE_AA)
+                cv2.putText(img=frame,
+                            text="Press 'q' to quit",
+                            org=[10, 60],
+                            fontFace=cv2.FONT_HERSHEY_DUPLEX,
+                            fontScale=0.75,
+                            color=[0, 0, 0],
+                            thickness=1,
+                            lineType=cv2.LINE_AA)
 
                 cv2.imshow("Scanner", frame)
 
@@ -179,39 +177,40 @@ def read_code(cam: cv2.VideoCapture, decoder: cv2.QRCodeDetector,
                 if key == ord('q'):
                     cv2.destroyAllWindows()
                     cam.release()
-                    print(f"{TC.OK}[INFO]{TC.ENDC} Exiting")
+                    print(f"{TC.OK}[INFO]{TC.ENDC}\tExiting")
                     exit(0)
 
                 elif key == ord('U'):
                     cv2.destroyAllWindows()
                     cam.release()
+                    # TODO: Find a way to run update script in background(?)
                     match input("Check for updates? (y/n) ").lower():
                         case 'y':
-                            print(f"{TC.OK}[INFO]{TC.ENDC} Running update")
+                            print(f"{TC.OK}[INFO]{TC.ENDC}\tRunning update")
                             exit(0)
 
                         case 'n':
-                            print(f"{TC.OK}[INFO]{TC.ENDC} Abort")
+                            print(f"{TC.OK}[INFO]{TC.ENDC}\tAbort")
                             continue
 
                         case _:
-                            print(f"{TC.OK}[INFO]{TC.ENDC} Unknown key. Aborting")
+                            print(f"{TC.OK}[INFO]{TC.ENDC}\tUnknown key. Aborting")
                             continue
 
             else:
                 print(f"{TC.OK}[INFO]{TC.ENDC}\tRead value: {raw_result}")
-                if raw_result in hash_dict:
-                    show_proc_img(proc_img.copy(), f"Obtained: {(decrypt := hash_dict[raw_result])}")
-                    if cv2.waitKey(1500) & 0xFF == 27:
+                if raw_result in hash_dict:  # Student ID was scanned
+                    show_proc_img("resources/img/scan_img.png", f"Obtained: {(decrypt := hash_dict[raw_result])}")
+                    if cv2.waitKey(500) & 0xFF == 27:
                         pass
+
                     return decrypt
 
-                elif raw_result in status_dict:
-                    action = status_flip[status_dict[raw_result].value]
-                    show_proc_img(proc_img.copy(), f"Obtained: {raw_result}")
-                    if cv2.waitKey(1500) & 0xFF == 27:
-                        pass
-                    return raw_result, action
+                elif raw_result in status_dict:  # Device was scanned
+                    action = status_flip[status_dict[result := raw_result].value]
+                    show_proc_img("resources/img/scan_img.png", f"Obtained: {result}")
+                    cv2.waitKey(500)
+                    return result, action
 
 
 def get_files() -> tuple[str, dict, dict] | str:
@@ -223,7 +222,7 @@ def get_files() -> tuple[str, dict, dict] | str:
         return "Ok", json.loads(content["api_key"]), json.loads(content["validation"])
 
     else:
-        print(f"{TC.FAIL}[ERROR]{TC.ENDC} Bad password")
+        print(f"{TC.FAIL}[ERROR]{TC.ENDC}\tBad password")
         exit(1)
 
 
@@ -237,15 +236,12 @@ def upload_data(data: dict) -> str:
     return resp.content.decode("utf-8")
 
 
-def create_qr_codes(path_out: str, fuzz: str = None):
+def create_qr_codes(path_out: str, fuzz: str = None) -> None:
     filenames = []
     font = ImageFont.truetype("resources/data/RobotoMono-Regular.ttf", size=16)
 
-    # DO NOT REMOVE! Code created courtesy of developer Lily
-    #
+    # DO NOT REMOVE! Code created courtesy of developer and princess Lily
     # help(code)
-    #
-    #
 
     content, comments = read_txt("resources/qr_codes/creation_list.txt")
     open("resources/qr_codes/creation_list.txt", 'w').close()
@@ -269,12 +265,15 @@ def create_qr_codes(path_out: str, fuzz: str = None):
                 ).save(f"resources/qr_codes/output/{stripped}.png")
 
             validation_json = read_json("resources/data/validation.json", exit_on_err=True)
+
+            # TODO: Try to take advantage of json writing errors to check for duplicates
             while True:
                 if data in validation_json:
-                    print("Key exists already somehow. Reversing fuzz and trying again")
-                    qr.make(
-                        data := sha256((fuzz[::-1]).join(stripped.split()).encode()).hexdigest()
-                    ).save(f"{path_out}/{stripped}.png")
+                    if input("Name possibly already exists. Create a new one? (y/n) ").lower() == 'y':
+                        qr.make(
+                            data := sha256((fuzz[::-1]).join(stripped.split()).encode()).hexdigest()
+                        ).save(f"{path_out}/{stripped}.png")
+
                     continue
 
                 else:
@@ -296,7 +295,7 @@ def create_qr_codes(path_out: str, fuzz: str = None):
 
 if __name__ == "__main__":
     print("This file only contains helper functions and is useless unless generating qr codes.")
-    match input("Create QR codes? (y/n/s) ").lower():
+    match input("Create QR codes? (y/n/sync) ").lower():
         case 'y':
             modifier = input("Enter desired name modifier (Leave blank for none): ")
             if (output_path := input("Enter output path (Leave blank for default): ").lower()) != "":
@@ -304,16 +303,18 @@ if __name__ == "__main__":
             else:
                 create_qr_codes("resources/qr_codes/output", modifier)
 
+            upload_data(read_json("resources/data/validation.json", exit_on_err=True))
+
         case 'n':
             exit(0)
 
-        case 's':
+        case 'sync':
             if input("Sync local? (y/n) ").lower() == "y":
                 sync_local()
                 print("Finished syncing local machine")
 
             if input("Sync AWS? (y/n) ").lower() == "y":
-                sync_cloud()
+                upload_data(read_json("resources/data/validation.json", exit_on_err=True))
                 print("Finished syncing AWS")
 
         case _:
