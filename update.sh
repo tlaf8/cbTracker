@@ -1,5 +1,7 @@
 #!/bin/bash
 
+read -rsn1 -p "Press any key to begin updating"
+printf "\n"
 cd ~/Documents/cbTracker
 
 # Remove all old files

@@ -11,9 +11,6 @@ from PIL import Image, ImageDraw, ImageFont
 from hashlib import sha256
 
 
-# from getpass import getpass
-
-
 class TC:
     OK = '\033[92m'
     FAIL = '\033[91m'
@@ -188,7 +185,7 @@ def read_code(cam: cv2.VideoCapture, decoder: cv2.QRCodeDetector, msg: str, hash
                     match input("Run updater? (y/n) ").lower():
                         case 'y':
                             print(f"{TC.OK}[INFO]{TC.ENDC}\tRunning update")
-                            sp.Popen("bash ../update.sh".split())
+                            sp.Popen("x-terminal-emulator -e ../update.sh".split())
                             exit(0)
 
                         case 'n':
