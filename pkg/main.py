@@ -42,7 +42,7 @@ if __name__ == "__main__":
 
             cv2.waitKey(500)
 
-            show_proc_img("resources/img/loading.png")
+            show_proc_img("resources/img/updating.png")
             cv2.waitKey(1)
 
             current_time = datetime.now()
