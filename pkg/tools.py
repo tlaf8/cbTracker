@@ -47,7 +47,7 @@ def read_json(path: str, exit_on_err=True) -> dict | list:
 
         if "validation.json" in path or "api_key.json" in path:
             if input(f"{TC.HELP}[HELP]{TC.ENDC}\tLooks like {path} is missing. Download it? (y/n) ").lower() == "y":
-                sync_local()
+                sync_local(input("Enter key: "))
                 print(f"{TC.OK}[INFO]{TC.ENDC}\tFiles downloaded successfully. Please restart the program.")
                 exit(0)
 
@@ -79,8 +79,8 @@ def write_json(path: str, data: dict) -> None:
             exit(1)
 
 
-def sync_local() -> None:
-    result, api_key, validation = get_files()
+def sync_local(pwd: str) -> None:
+    result, api_key, validation = get_files(pwd)
 
     if result != "Unauthorized: Bad password":
         write_json("resources/data/api_key.json", api_key)
@@ -213,9 +213,9 @@ def read_code(cam: cv2.VideoCapture, decoder: cv2.QRCodeDetector, msg: str, hash
                     return result, action
 
 
-def get_files() -> tuple[str, dict, dict] | str:
+def get_files(pwd: str) -> tuple[str, dict, dict] | str:
     returned = requests.post("https://tryobgwrhsrnbyq5re77znzxry0brhfc.lambda-url.ca-central-1.on.aws/",
-                             data={"pass": sha256(input("Enter key: ").encode()).hexdigest()}).content.decode("utf-8")
+                             data={"pass": sha256(pwd.encode()).hexdigest()}).content.decode("utf-8")
 
     if returned != "Unauthorized: Bad password":
         content = json.loads(returned)
@@ -226,9 +226,9 @@ def get_files() -> tuple[str, dict, dict] | str:
         exit(1)
 
 
-def upload_data(data: dict) -> str:
+def upload_data(data: dict, pwd: str) -> str:
     params = {
-        "pass": sha256(input("Enter key: ").encode()).hexdigest(),
+        "pass": sha256(pwd.encode()).hexdigest(),
         "data": base64.urlsafe_b64encode(json.dumps(data).encode())
     }
 
@@ -281,7 +281,7 @@ def create_qr_codes(path_out: str, fuzz: str = None) -> None:
 
             validation_json[data] = stripped
             write_json("resources/data/validation.json", validation_json)
-            upload_data(validation_json)
+            upload_data(validation_json, input("Enter key: "))
 
         else:
             qr.make(stripped).save(f"{path_out}/{stripped}.png")
@@ -303,18 +303,19 @@ if __name__ == "__main__":
             else:
                 create_qr_codes("resources/qr_codes/output", modifier)
 
-            upload_data(read_json("resources/data/validation.json", exit_on_err=True))
+            upload_data(read_json("resources/data/validation.json", exit_on_err=True), input("Enter key: "))
 
         case 'n':
             exit(0)
 
         case 'sync':
+            aws_key = input("Enter key: ")
             if input("Sync local? (y/n) ").lower() == "y":
-                sync_local()
+                sync_local(aws_key)
                 print("Finished syncing local machine")
 
             if input("Sync AWS? (y/n) ").lower() == "y":
-                upload_data(read_json("resources/data/validation.json", exit_on_err=True))
+                upload_data(read_json("resources/data/validation.json", exit_on_err=True), aws_key)
                 print("Finished syncing AWS")
 
         case _:

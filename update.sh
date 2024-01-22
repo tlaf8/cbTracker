@@ -1,9 +1,5 @@
 #!/bin/bash
 
-# Move auth and validation
-echo "--> moving validation and auth key"
-mv pkg/resources/data/api_key.json pkg/resources/data/validation.json .
-
 # Remove all old files
 echo "--> purging old files"
 rm -r pkg/*
@@ -16,10 +12,6 @@ git clone https://github.com/pakwan8/cbTracker /tmp/cbTracker
 echo "--> moving new files"
 mv /tmp/cbTracker/pkg/* pkg
 yes | rm -r /tmp/cbTracker
-
-# Move validation and auth back
-echo "--> moving validation and auth key back"
-mv validation.json api_key.json pkg/resources/data
 
 # Recreate virtual env
 echo "--> recreating virtual env"

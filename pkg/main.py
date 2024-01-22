@@ -31,7 +31,7 @@ if __name__ == "__main__":
     while True:
         try:
             # TODO: On slower devices need to release cam or it will carry the last scan into next call of read_code
-            # TODO: See if there is a way to work around thisq
+            # TODO: See if there is a way to work around this
             cam = cv2.VideoCapture(0)
             device, action = read_code(cam, decoder, "Show Chromebook/Calculator", decrypt, devices)
             cam.release()
