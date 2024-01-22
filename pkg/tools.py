@@ -181,14 +181,14 @@ def read_code(cam: cv2.VideoCapture, decoder: cv2.QRCodeDetector, msg: str, hash
                     print(f"{TC.OK}[INFO]{TC.ENDC}\tExiting")
                     exit(0)
 
-                elif key == ord('U'):
+                elif key == ord('u'):
                     cv2.destroyAllWindows()
                     cam.release()
                     # TODO: Find a way to run update script in background(?)
-                    match input("Check for updates? (y/n) ").lower():
+                    match input("Run updater? (y/n) ").lower():
                         case 'y':
                             print(f"{TC.OK}[INFO]{TC.ENDC}\tRunning update")
-                            sp.call("bash update.sh".split())
+                            sp.Popen("bash ../update.sh".split())
                             exit(0)
 
                         case 'n':
@@ -196,7 +196,7 @@ def read_code(cam: cv2.VideoCapture, decoder: cv2.QRCodeDetector, msg: str, hash
                             continue
 
                         case _:
-                            print(f"{TC.OK}[INFO]{TC.ENDC}\tUnknown key. Aborting")
+                            print(f"{TC.OK}[INFO]{TC.ENDC}\tUnknown key. Abort")
                             continue
 
             else:

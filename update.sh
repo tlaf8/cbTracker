@@ -1,5 +1,7 @@
 #!/bin/bash
 
+cd ~/Documents/cbTracker
+
 # Remove all old files
 echo "--> purging old files"
 rm -r pkg/*
