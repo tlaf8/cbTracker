@@ -6,6 +6,7 @@ import base64
 import requests
 import traceback
 import qrcode as qr
+import subprocess as sp
 from PIL import Image, ImageDraw, ImageFont
 from hashlib import sha256
 
@@ -187,6 +188,7 @@ def read_code(cam: cv2.VideoCapture, decoder: cv2.QRCodeDetector, msg: str, hash
                     match input("Check for updates? (y/n) ").lower():
                         case 'y':
                             print(f"{TC.OK}[INFO]{TC.ENDC}\tRunning update")
+                            sp.call("bash update.sh".split())
                             exit(0)
 
                         case 'n':
