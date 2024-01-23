@@ -185,7 +185,7 @@ def read_code(cam: cv2.VideoCapture, decoder: cv2.QRCodeDetector, msg: str, hash
                     match input("Run updater? (y/n) ").lower():
                         case 'y':
                             print(f"{TC.OK}[INFO]{TC.ENDC}\tRunning update")
-                            sp.call("x-terminal-emulator -e ../update.sh".split())
+                            sp.call("x-terminal-emulator -e ../update.sh & disown".split())
                             exit(0)
 
                         case 'n':
