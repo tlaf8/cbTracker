@@ -6,9 +6,10 @@ import base64
 import requests
 import traceback
 import qrcode as qr
-import subprocess as sp
+import pyperclip as clip
 from PIL import Image, ImageDraw, ImageFont
 from hashlib import sha256
+from time import sleep
 
 
 class TC:
@@ -182,10 +183,14 @@ def read_code(cam: cv2.VideoCapture, decoder: cv2.QRCodeDetector, msg: str, hash
                     cv2.destroyAllWindows()
                     cam.release()
                     # TODO: Find a way to run update script in background(?)
-                    match input("Run updater? (y/n) ").lower():
+                    match input("Run update? (y/n) ").lower():
                         case 'y':
-                            print(f"{TC.OK}[INFO]{TC.ENDC}\tRunning update")
-                            sp.Popen("x-terminal-emulator -e ../update.sh & disown".split())
+                            print(f"{TC.OK}[INFO]{TC.ENDC}\tUpdate command will be copied to clipboard")
+                            print(f"{TC.OK}[INFO]{TC.ENDC}\tUse Ctrl+Alt+T then Ctrl+Alt+V then ENTER to run update.sh")
+                            print(f"{TC.OK}[INFO]{TC.ENDC}\tCommand and terminal management is weird and I give up for now ¯\_(ツ)_/¯")
+                            clip.copy("bash ~/Documents/cbTracker/update.sh")
+                            print(f"{TC.HELP}{clip.paste()}{TC.ENDC} copied to clipboard")
+                            input(f"Press enter once finished reading. {TC.FAIL}Make sure program is not running!{TC.ENDC}")
                             exit(0)
 
                         case 'n':

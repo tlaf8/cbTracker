@@ -59,16 +59,16 @@ if __name__ == "__main__":
             devices.update(zip([name.value for name in calc_sheet.range(f"G2:G{lr_calc}")], calc_sheet.range(f"H2:H{lr_calc}")))
 
         except cv2.error:
-            print(f"{TC.WARNING}[WARN]{TC.ENDC} OpenCV threw error, can likely ignore")
+            print(f"{TC.WARNING}[WARN]{TC.ENDC}\tOpenCV threw error, can likely ignore")
 
         except ValueError:
-            print(f"{TC.FAIL}[ERROR]{TC.ENDC} Not scanning in right order")
+            print(f"{TC.FAIL}[ERROR]{TC.ENDC}\tNot scanning in right order")
             write_log()
             show_proc_img("resources/img/loading.png", "Follow on screen instructions. Restarting")
             if cv2.waitKey(1500) & 0xFF == 27:
                 pass
 
         except (Exception,):
-            print(f"{TC.FAIL}[FATAL]{TC.ENDC} Unknown error occurred. See logs for more details")
+            print(f"{TC.FAIL}[FATAL]{TC.ENDC}\tUnknown error occurred. See logs for more details")
             write_log()
             exit(1)
