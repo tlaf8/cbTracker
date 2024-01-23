@@ -6,10 +6,10 @@ import base64
 import requests
 import traceback
 import qrcode as qr
-import pyperclip as clip
-from PIL import Image, ImageDraw, ImageFont
-from hashlib import sha256
+import subprocess as sp
 from time import sleep
+from hashlib import sha256
+from PIL import Image, ImageDraw, ImageFont
 
 
 class TC:
@@ -185,12 +185,28 @@ def read_code(cam: cv2.VideoCapture, decoder: cv2.QRCodeDetector, msg: str, hash
                     # TODO: Find a way to run update script in background(?)
                     match input("Run update? (y/n) ").lower():
                         case 'y':
-                            print(f"{TC.OK}[INFO]{TC.ENDC}\tUpdate command will be copied to clipboard")
-                            print(f"{TC.OK}[INFO]{TC.ENDC}\tUse Ctrl+Alt+T then Ctrl+Alt+V then ENTER to run update.sh")
-                            print(f"{TC.OK}[INFO]{TC.ENDC}\tCommand and terminal management is weird and I give up for now ¯\_(ツ)_/¯")
-                            clip.copy("bash ~/Documents/cbTracker/update.sh")
-                            print(f"{TC.HELP}{clip.paste()}{TC.ENDC} copied to clipboard")
-                            input(f"Press enter once finished reading. {TC.FAIL}Make sure program is not running!{TC.ENDC}")
+                            _dir = "~/Documents/cbTracker"
+
+                            # Begin running update commands
+                            print(f"{TC.HELP}[UPDATE]{TC.ENDC}\tPurging old files")
+                            sp.run("rm -r pkg/*".split())
+
+                            print(f"{TC.HELP}[UPDATE]{TC.ENDC}\tCloning")
+                            sp.run("git clone https://github.com/pakwan8/cbTracker /tmp/cbTracker".split())
+
+                            print(f"{TC.HELP}[UPDATE]{TC.ENDC}\tMoving new files")
+                            sp.run(f"mv /tmp/cbTracker/pkg/* {_dir}/pkg".split())
+                            sp.run("yes | rm -r /tmp/cbTracker".split())
+
+                            print(f"{TC.HELP}[UPDATE]{TC.ENDC}\tRecreating virtual env")
+                            sp.run(f"python -m venv {_dir}/pkg/venv")
+                            sp.run(f"{_dir}/venv/bin/pip install -r resources/requirements.txt")
+
+                            print(f"{TC.HELP}[UPDATE]{TC.ENDC}\tSetting execution permissions")
+                            sp.call(f"chmod +x {_dir}/pkg/run.sh")
+
+                            print(f"{TC.HELP}[UPDATE]{TC.ENDC}\tFinished. Exiting in 5 seconds...")
+                            sleep(5)
                             exit(0)
 
                         case 'n':
