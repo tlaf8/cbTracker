@@ -1,0 +1,3 @@
+# Enter list of names/items to convert to qr codes
+# For organization, you can use the '#' symbol at the beginning
+# to denote a comment. These lines will not be read.
