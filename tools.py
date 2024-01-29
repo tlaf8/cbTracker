@@ -183,6 +183,8 @@ def read_code(cam: cv2.VideoCapture,
                     exit(0)
 
                 elif key == ord('t'):
+                    cv2.destroyAllWindows()
+                    cam.release()
                     print("This file only contains helper functions and is useless unless generating qr codes.")
                     match input("Create QR codes? (y/n/sync) ").lower():
                         case 'y':
@@ -203,6 +205,8 @@ def read_code(cam: cv2.VideoCapture,
                             exit(0)
 
                 elif key == ord('s'):
+                    cv2.destroyAllWindows()
+                    cam.release()
                     aws_key = input("Enter key: ")
                     if input("Sync local? (y/n) ").lower() == "y":
                         sync_local(aws_key)
