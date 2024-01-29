@@ -1,7 +1,8 @@
 .idea
 __pycache__
-pkg/resources/data/api_key.json
-pkg/resources/data/validation.json
+resources/data/api_key.json
+resources/data/validation.json
+logs/*
 venv
 lily.py
 poster.py

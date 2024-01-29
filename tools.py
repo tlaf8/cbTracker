@@ -3,11 +3,10 @@ import json
 import time
 import cv2
 import base64
+import getpass
 import requests
 import traceback
 import qrcode as qr
-import subprocess as sp
-from time import sleep
 from hashlib import sha256
 from PIL import Image, ImageDraw, ImageFont
 
@@ -46,7 +45,7 @@ def read_json(path: str, exit_on_err=True) -> dict | list:
 
         if "validation.json" in path or "api_key.json" in path:
             if input(f"{TC.HELP}[HELP]{TC.ENDC}\tLooks like {path} is missing. Download it? (y/n) ").lower() == "y":
-                sync_local(input("Enter key: "))
+                sync_local(getpass.getpass())
                 print(f"{TC.OK}[INFO]{TC.ENDC}\tFiles downloaded successfully. Please restart the program.")
                 exit(0)
 
@@ -134,7 +133,11 @@ def show_proc_img(img_path: str, msg: str = "") -> None:
     cv2.imshow("Scanner", img)
 
 
-def read_code(cam: cv2.VideoCapture, decoder: cv2.QRCodeDetector, msg: str, hash_dict: dict, status_dict: dict) -> str | tuple[str, str]:
+def read_code(cam: cv2.VideoCapture,
+              decoder: cv2.QRCodeDetector,
+              msg: str,
+              hash_dict: dict,
+              status_dict: dict) -> str | tuple[str, str]:
     settings = read_json("resources/data/settings.json")
     while True:
         _, raw_frame = cam.read()
@@ -179,43 +182,35 @@ def read_code(cam: cv2.VideoCapture, decoder: cv2.QRCodeDetector, msg: str, hash
                     print(f"{TC.OK}[INFO]{TC.ENDC}\tExiting")
                     exit(0)
 
-                elif key == ord('u'):
-                    cv2.destroyAllWindows()
-                    cam.release()
-                    # TODO: Find a way to run update script in background(?)
-                    match input("Run update? (y/n) ").lower():
+                elif key == ord('t'):
+                    print("This file only contains helper functions and is useless unless generating qr codes.")
+                    match input("Create QR codes? (y/n/sync) ").lower():
                         case 'y':
-                            _dir = "~/Documents/cbTracker"
-
-                            # Begin running update commands
-                            print(f"{TC.HELP}[UPDATE]{TC.ENDC}\tPurging old files")
-                            sp.run("rm -r pkg/*".split())
-
-                            print(f"{TC.HELP}[UPDATE]{TC.ENDC}\tCloning")
-                            sp.run("git clone https://github.com/pakwan8/cbTracker /tmp/cbTracker".split())
-
-                            print(f"{TC.HELP}[UPDATE]{TC.ENDC}\tMoving new files")
-                            sp.run(f"mv /tmp/cbTracker/pkg/* {_dir}/pkg".split())
-                            sp.run("yes | rm -r /tmp/cbTracker".split())
-
-                            print(f"{TC.HELP}[UPDATE]{TC.ENDC}\tRecreating virtual env")
-                            sp.run(f"python -m venv {_dir}/pkg/venv")
-                            sp.run(f"{_dir}/venv/bin/pip install -r resources/requirements.txt")
-
-                            print(f"{TC.HELP}[UPDATE]{TC.ENDC}\tSetting execution permissions")
-                            sp.call(f"chmod +x {_dir}/pkg/run.sh")
-
-                            print(f"{TC.HELP}[UPDATE]{TC.ENDC}\tFinished. Exiting in 5 seconds...")
-                            sleep(5)
-                            exit(0)
+                            modifier = input("Enter desired name modifier (Leave blank for none): ")
+                            if (output_path := input("Enter output path (Leave blank for default): ").lower()) != "":
+                                create_qr_codes(output_path, modifier)
+                            else:
+                                create_qr_codes("resources/qr_codes/output", modifier)
+                                upload_data(read_json("resources/data/validation.json",
+                                            exit_on_err=True),
+                                            input("Enter key: "))
 
                         case 'n':
-                            print(f"{TC.OK}[INFO]{TC.ENDC}\tAbort")
-                            continue
+                            exit(0)
 
                         case _:
-                            print(f"{TC.OK}[INFO]{TC.ENDC}\tUnknown key. Abort")
-                            continue
+                            print("Invalid option. Exiting")
+                            exit(0)
+
+                elif key == ord('s'):
+                    aws_key = input("Enter key: ")
+                    if input("Sync local? (y/n) ").lower() == "y":
+                        sync_local(aws_key)
+                        print("Finished syncing local machine")
+
+                    if input("Sync AWS? (y/n) ").lower() == "y":
+                        upload_data(read_json("resources/data/validation.json", exit_on_err=True), aws_key)
+                        print("Finished syncing AWS")
 
             else:
                 print(f"{TC.OK}[INFO]{TC.ENDC}\tRead value: {raw_result}")
@@ -314,30 +309,7 @@ def create_qr_codes(path_out: str, fuzz: str = None) -> None:
 
 
 if __name__ == "__main__":
-    print("This file only contains helper functions and is useless unless generating qr codes.")
-    match input("Create QR codes? (y/n/sync) ").lower():
-        case 'y':
-            modifier = input("Enter desired name modifier (Leave blank for none): ")
-            if (output_path := input("Enter output path (Leave blank for default): ").lower()) != "":
-                create_qr_codes(output_path, modifier)
-            else:
-                create_qr_codes("resources/qr_codes/output", modifier)
-
-            upload_data(read_json("resources/data/validation.json", exit_on_err=True), input("Enter key: "))
-
-        case 'n':
-            exit(0)
-
-        case 'sync':
-            aws_key = input("Enter key: ")
-            if input("Sync local? (y/n) ").lower() == "y":
-                sync_local(aws_key)
-                print("Finished syncing local machine")
-
-            if input("Sync AWS? (y/n) ").lower() == "y":
-                upload_data(read_json("resources/data/validation.json", exit_on_err=True), aws_key)
-                print("Finished syncing AWS")
-
-        case _:
-            print("Invalid option. Exiting")
-            exit(0)
+    print("This is a library file and is useless when ran.")
+    print("To access QR code generation, press 't' on the main window.")
+    print("Press 's' on main window to access synchronization menu.")
+    input("You may exit this window or press ENTER to quit. ")
