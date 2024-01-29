@@ -195,6 +195,7 @@ def read_code(cam: cv2.VideoCapture,
                                 create_qr_codes("resources/qr_codes/output", modifier)
                                 upload_data(read_json("resources/data/validation.json",
                                             exit_on_err=True),
+                                            "validation",
                                             input("Enter key: "))
 
                         case 'n':
@@ -213,7 +214,8 @@ def read_code(cam: cv2.VideoCapture,
                         print("Finished syncing local machine")
 
                     if input("Sync AWS? (y/n) ").lower() == "y":
-                        upload_data(read_json("resources/data/validation.json", exit_on_err=True), aws_key)
+                        upload_data(read_json("resources/data/validation.json", exit_on_err=True), "validation", aws_key)
+                        upload_data(read_json("resources/data/api_key.json", exit_on_err=True), "apikey", aws_key)
                         print("Finished syncing AWS")
 
             else:
@@ -245,9 +247,10 @@ def get_files(pwd: str) -> tuple[str, dict, dict] | str:
         exit(1)
 
 
-def upload_data(data: dict, pwd: str) -> str:
+def upload_data(data: dict, kind: str, pwd: str) -> str:
     params = {
         "pass": sha256(pwd.encode()).hexdigest(),
+        "kind": kind,
         "data": base64.urlsafe_b64encode(json.dumps(data).encode())
     }
 
@@ -300,7 +303,7 @@ def create_qr_codes(path_out: str, fuzz: str = None) -> None:
 
             validation_json[data] = stripped
             write_json("resources/data/validation.json", validation_json)
-            upload_data(validation_json, input("Enter key: "))
+            upload_data(validation_json, "validation", input("Enter key: "))
 
         else:
             qr.make(stripped).save(f"{path_out}/{stripped}.png")
