@@ -32,16 +32,18 @@ if __name__ == "__main__":
         try:
             # TODO: On slower devices need to release cam or it will carry the last scan into next call of read_code
             # TODO: See if there is a way to work around this
+
+            # Get device
             cam = cv2.VideoCapture(0)
             device, action = read_code(cam, decoder, "Show Chromebook/Calculator", decrypt, devices)
             cam.release()
 
+            # Get student
             cam = cv2.VideoCapture(0)
             student = read_code(cam, decoder, "Show ID", decrypt, devices)
             cam.release()
 
             cv2.waitKey(500)
-
             show_proc_img("resources/img/updating.png")
             cv2.waitKey(1)
 
@@ -54,6 +56,7 @@ if __name__ == "__main__":
 
             update_sheet(entry, calc_sheet) if "CALC-" in device else update_sheet(entry, cb_sheet)
 
+            # Update dicts in charge of keeping track of whether a device is rented out or not
             devices = {}
             devices.update(zip([name.value for name in cb_sheet.range(f"G2:G{lr_cb}")], cb_sheet.range(f"H2:H{lr_cb}")))
             devices.update(zip([name.value for name in calc_sheet.range(f"G2:G{lr_calc}")], calc_sheet.range(f"H2:H{lr_calc}")))
@@ -65,8 +68,9 @@ if __name__ == "__main__":
             print(f"{TC.FAIL}[ERROR]{TC.ENDC}\tNot scanning in right order")
             write_log()
             show_proc_img("resources/img/loading.png", "Follow on screen instructions. Restarting")
-            if cv2.waitKey(1500) & 0xFF == 27:
-                pass
+            # Don't need mask if simply delaying while letting openCV run
+            # Consider removing here and in other places too
+            cv2.waitKey(1500) & 0xFF
 
         except (Exception,):
             print(f"{TC.FAIL}[FATAL]{TC.ENDC}\tUnknown error occurred. See logs for more details")

@@ -3,11 +3,11 @@ import json
 import time
 import cv2
 import base64
-import getpass
 import requests
 import traceback
 import qrcode as qr
 from hashlib import sha256
+from pwinput import pwinput
 from PIL import Image, ImageDraw, ImageFont
 
 
@@ -31,10 +31,10 @@ def write_log() -> None:
 
 def read_txt(path: str) -> tuple[list[str], list[str]]:
     with open(path, 'r') as file_in:
-        return [line for line in file_in if '#' not in line], [line for line in file_in if '#' in line]
+        return [line for line in file_in if line[0] != '#'], [line for line in file_in if line[0] == '#']
 
 
-def read_json(path: str, exit_on_err=True) -> dict | list:
+def read_json(path: str, exit_on_err=True) -> dict[str: str] | list:
     try:
         with open(path, "r") as f:
             return json.load(f)
@@ -45,8 +45,10 @@ def read_json(path: str, exit_on_err=True) -> dict | list:
 
         if "validation.json" in path or "api_key.json" in path:
             if input(f"{TC.HELP}[HELP]{TC.ENDC}\tLooks like {path} is missing. Download it? (y/n) ").lower() == "y":
-                sync_local(getpass.getpass())
+                sync_local(pwinput())
                 print(f"{TC.OK}[INFO]{TC.ENDC}\tFiles downloaded successfully. Please restart the program.")
+                print(f"{TC.OK}[INFO]{TC.ENDC}\tExiting in 5")
+                time.sleep(5)
                 exit(0)
 
             else:
@@ -78,20 +80,19 @@ def write_json(path: str, data: dict) -> None:
 
 
 def sync_local(pwd: str) -> None:
-    result, api_key, validation = get_files(pwd)
+    returned = requests.post("https://tryobgwrhsrnbyq5re77znzxry0brhfc.lambda-url.ca-central-1.on.aws/",
+                             data={"pass": sha256(pwd.encode()).hexdigest()}).content.decode("utf-8")
 
-    if result != "Unauthorized: Bad password":
-        write_json("resources/data/api_key.json", api_key)
-        write_json("resources/data/validation.json", validation)
-
-    elif result == "Unauthorized: Bad password":
-        print(f"{TC.FAIL}[ERROR]{TC.ENDC}\tBad password.")
+    if returned == "Unauthorized: Bad password":
+        print(f"{TC.FAIL}[ERROR]{TC.ENDC}\t{returned}")
         exit(1)
 
-    else:
-        print(f"{TC.FAIL}[ERROR]{TC.ENDC}\tSomething went wrong, check logs for more info.")
-        write_log()
-        exit(1)
+    returned = json.loads(returned)
+    api_key = json.loads(returned["api_key"])
+    validation = json.loads(returned["validation"])
+
+    write_json("resources/data/api_key.json", api_key)
+    write_json("resources/data/validation.json", validation)
 
 
 def update_sheet(entry, sheet) -> None:
@@ -185,38 +186,43 @@ def read_code(cam: cv2.VideoCapture,
                 elif key == ord('t'):
                     cv2.destroyAllWindows()
                     cam.release()
-                    print("This file only contains helper functions and is useless unless generating qr codes.")
-                    match input("Create QR codes? (y/n/sync) ").lower():
+                    match input("Create QR codes? (y/n) ").lower():
                         case 'y':
                             modifier = input("Enter desired name modifier (Leave blank for none): ")
-                            if (output_path := input("Enter output path (Leave blank for default): ").lower()) != "":
+                            if (output_path := input("Enter output path (Leave blank for default (Recommended)): ").lower()) != "":
                                 create_qr_codes(output_path, modifier)
                             else:
                                 create_qr_codes("resources/qr_codes/output", modifier)
                                 upload_data(read_json("resources/data/validation.json",
                                             exit_on_err=True),
                                             "validation",
-                                            input("Enter key: "))
+                                            pwinput())
 
                         case 'n':
                             exit(0)
 
                         case _:
-                            print("Invalid option. Exiting")
-                            exit(0)
+                            print("Invalid option")
+                            exit(1)
 
                 elif key == ord('s'):
                     cv2.destroyAllWindows()
                     cam.release()
-                    aws_key = input("Enter key: ")
-                    if input("Sync local? (y/n) ").lower() == "y":
+                    if input("Sync local machine with AWS? (y/n) ").lower() == "y":
+                        aws_key = pwinput()
                         sync_local(aws_key)
                         print("Finished syncing local machine")
 
-                    if input("Sync AWS? (y/n) ").lower() == "y":
+                    if input("Sync AWS with local machine? (y/n) ").lower() == "y":
+                        aws_key = pwinput()
                         upload_data(read_json("resources/data/validation.json", exit_on_err=True), "validation", aws_key)
                         upload_data(read_json("resources/data/api_key.json", exit_on_err=True), "apikey", aws_key)
                         print("Finished syncing AWS")
+
+                elif key == ord('n'):
+                    cv2.destroyAllWindows()
+                    cam.release()
+                    create_qr_codes("resources/qr_codes/output", fuzz=pwinput("Fuzzer: "))
 
             else:
                 print(f"{TC.OK}[INFO]{TC.ENDC}\tRead value: {raw_result}")
@@ -234,19 +240,6 @@ def read_code(cam: cv2.VideoCapture,
                     return result, action
 
 
-def get_files(pwd: str) -> tuple[str, dict, dict] | str:
-    returned = requests.post("https://tryobgwrhsrnbyq5re77znzxry0brhfc.lambda-url.ca-central-1.on.aws/",
-                             data={"pass": sha256(pwd.encode()).hexdigest()}).content.decode("utf-8")
-
-    if returned != "Unauthorized: Bad password":
-        content = json.loads(returned)
-        return "Ok", json.loads(content["api_key"]), json.loads(content["validation"])
-
-    else:
-        print(f"{TC.FAIL}[ERROR]{TC.ENDC}\tBad password")
-        exit(1)
-
-
 def upload_data(data: dict, kind: str, pwd: str) -> str:
     params = {
         "pass": sha256(pwd.encode()).hexdigest(),
@@ -258,21 +251,40 @@ def upload_data(data: dict, kind: str, pwd: str) -> str:
     return resp.content.decode("utf-8")
 
 
-def create_qr_codes(path_out: str, fuzz: str = None) -> None:
-    filenames = []
+def create_qr_codes(path_out: str, fuzz: str = None, from_file=False) -> None:
     font = ImageFont.truetype("resources/data/RobotoMono-Regular.ttf", size=16)
 
     # DO NOT REMOVE! Code created courtesy of developer and princess Lily
     # help(code)
 
-    content, comments = read_txt("resources/qr_codes/creation_list.txt")
-    open("resources/qr_codes/creation_list.txt", 'w').close()
-    with open("resources/qr_codes/creation_list.txt", 'w') as creation_list:
-        creation_list.writelines(comments)
+    if from_file is True:
+        names, comments = read_txt("resources/qr_codes/creation_list.txt")
+        open("resources/qr_codes/creation_list.txt", 'w').close()
+        with open("resources/qr_codes/creation_list.txt", 'w') as creation_list:
+            creation_list.writelines(comments)
 
-    for entry in content:
+    else:
+        names = []
+        print("Enter 'DONE' when finished.")
+        while True:
+            if (name := input("Enter full name of student: ")) == "DONE":
+                break
+
+            elif len(name.split(" ")) < 2:
+                print("Only found 1 name. Ensure that first, last and other names are entered")
+
+            else:
+                names.append(" ".join([i.strip() for i in name.split()]))
+
+    print("Creating QR codes for the following names:")
+    for name in names:
+        print(f"  --> {name}")
+
+    if input("Continue? (y/n) ").lower() != 'y':
+        return
+
+    for entry in names:
         stripped = entry.strip()
-        filenames.append(stripped)
 
         if fuzz != "":
             try:
@@ -303,20 +315,12 @@ def create_qr_codes(path_out: str, fuzz: str = None) -> None:
 
             validation_json[data] = stripped
             write_json("resources/data/validation.json", validation_json)
-            upload_data(validation_json, "validation", input("Enter key: "))
+            upload_data(validation_json, "validation", pwinput())
 
         else:
             qr.make(stripped).save(f"{path_out}/{stripped}.png")
 
-    for file in filenames:
-        img = Image.open(f"{path_out}/{file}.png")
+        img = Image.open(f"{path_out}/{entry}.png")
         printer = ImageDraw.Draw(img)
-        printer.text((img.width / 2 - font.getlength(file) / 2, img.height - 30), file, font=font)
-        img.save(f"{path_out}/{file}.png")
-
-
-if __name__ == "__main__":
-    print("This is a library file and is useless when ran.")
-    print("To access QR code generation, press 't' on the main window.")
-    print("Press 's' on main window to access synchronization menu.")
-    input("You may exit this window or press ENTER to quit. ")
+        printer.text((img.width / 2 - font.getlength(entry) / 2, img.height - 30), entry, font=font)
+        img.save(f"{path_out}/{entry}.png")
