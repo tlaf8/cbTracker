@@ -1,3 +1,4 @@
+import cv2
 import gspread
 from tools import *
 from datetime import datetime
@@ -35,12 +36,12 @@ if __name__ == "__main__":
 
             # Get device
             cam = cv2.VideoCapture(0)
-            device, action = read_code(cam, decoder, "Show Chromebook/Calculator", decrypt, devices)
+            device, action = read_code(cam, decoder, "Show Chromebook/Calculator", decrypt, devices, "device")
             cam.release()
 
             # Get student
             cam = cv2.VideoCapture(0)
-            student = read_code(cam, decoder, "Show ID", decrypt, devices)
+            student, _ = read_code(cam, decoder, "Show ID", decrypt, devices, "student")
             cam.release()
 
             cv2.waitKey(500)
@@ -62,17 +63,13 @@ if __name__ == "__main__":
             devices.update(zip([name.value for name in calc_sheet.range(f"G2:G{lr_calc}")], calc_sheet.range(f"H2:H{lr_calc}")))
 
         except cv2.error:
-            print(f"{TC.WARNING}[WARN]{TC.ENDC}\tOpenCV threw error, can likely ignore")
-
-        except ValueError:
-            print(f"{TC.FAIL}[ERROR]{TC.ENDC}\tNot scanning in right order")
-            write_log()
-            show_proc_img("resources/img/loading.png", "Follow on screen instructions. Restarting")
-            # Don't need mask if simply delaying while letting openCV run
-            # Consider removing here and in other places too
-            cv2.waitKey(1500) & 0xFF
+            print(f"{TC.WARNING}[WARN]{TC.ENDC}\tOpenCV threw some errors, can likely ignore")
 
         except (Exception,):
+            cv2.destroyAllWindows()
             print(f"{TC.FAIL}[FATAL]{TC.ENDC}\tUnknown error occurred. See logs for more details")
+            print(f"{TC.OK}[INFO]{TC.ENDC}\tRestarting in 5 seconds...")
+            time.sleep(5)
             write_log()
-            exit(1)
+            continue
+

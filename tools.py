@@ -138,7 +138,8 @@ def read_code(cam: cv2.VideoCapture,
               decoder: cv2.QRCodeDetector,
               msg: str,
               hash_dict: dict,
-              status_dict: dict) -> str | tuple[str, str]:
+              status_dict: dict,
+              expecting: str) -> tuple[str, str]:
     settings = read_json("resources/data/settings.json")
     while True:
         _, raw_frame = cam.read()
@@ -206,16 +207,28 @@ def read_code(cam: cv2.VideoCapture,
                 print(f"{TC.OK}[INFO]{TC.ENDC}\tRead value: {raw_result}")
                 if raw_result in hash_dict:  # Student ID was scanned
                     show_proc_img("resources/img/scan_img.png", f"Obtained: {(decrypt := hash_dict[raw_result])}")
-                    if cv2.waitKey(500) & 0xFF == 27:
-                        pass
+                    cv2.waitKey(500)
 
-                    return decrypt
+                    if expecting == "student":
+                        return decrypt, ""  # Return empty string for consistency
+
+                    else:
+                        show_proc_img("resources/img/loading.png", "Expected a device")
+                        cam.release()
+                        cv2.waitKey(3000)
 
                 elif raw_result in status_dict:  # Device was scanned
                     action = status_flip[status_dict[result := raw_result].value]
                     show_proc_img("resources/img/scan_img.png", f"Obtained: {result}")
                     cv2.waitKey(500)
-                    return result, action
+
+                    if expecting == "device":
+                        return result, action
+
+                    else:
+                        show_proc_img("resources/img/loading.png", "Expected an ID")
+                        cam.release()
+                        cv2.waitKey(3000)
 
 
 def upload_data(data: dict, kind: str, pwd: str) -> str:
