@@ -41,7 +41,6 @@ def read_json(path: str, exit_on_err=True) -> dict[str: str] | list:
 
     except FileNotFoundError:
         print(f"{TC.FAIL}[ERROR]{TC.ENDC}\tFile {path} could not be found. Check logs for more info")
-        write_log()
 
         if "validation.json" in path or "api_key.json" in path:
             if input(f"{TC.HELP}[HELP]{TC.ENDC}\tLooks like {path} is missing. Download it? (y/n) ").lower() == "y":
@@ -55,6 +54,7 @@ def read_json(path: str, exit_on_err=True) -> dict[str: str] | list:
                 exit(0)
 
         else:
+            write_log()
             exit(1)
 
     except json.JSONDecodeError:
@@ -183,28 +183,6 @@ def read_code(cam: cv2.VideoCapture,
                     print(f"{TC.OK}[INFO]{TC.ENDC}\tExiting")
                     exit(0)
 
-                elif key == ord('t'):
-                    cv2.destroyAllWindows()
-                    cam.release()
-                    match input("Create QR codes? (y/n) ").lower():
-                        case 'y':
-                            modifier = input("Enter desired name modifier (Leave blank for none): ")
-                            if (output_path := input("Enter output path (Leave blank for default (Recommended)): ").lower()) != "":
-                                create_qr_codes(output_path, modifier)
-                            else:
-                                create_qr_codes("resources/qr_codes/output", modifier)
-                                upload_data(read_json("resources/data/validation.json",
-                                            exit_on_err=True),
-                                            "validation",
-                                            pwinput())
-
-                        case 'n':
-                            exit(0)
-
-                        case _:
-                            print("Invalid option")
-                            exit(1)
-
                 elif key == ord('s'):
                     cv2.destroyAllWindows()
                     cam.release()
@@ -265,9 +243,9 @@ def create_qr_codes(path_out: str, fuzz: str = None, from_file=False) -> None:
 
     else:
         names = []
-        print("Enter 'DONE' when finished.")
+        print("Enter 'DONE' or nothing when finished.")
         while True:
-            if (name := input("Enter full name of student: ")) == "DONE":
+            if (name := input("Enter full name of student/device: ")) == "DONE" or name == "":
                 break
 
             elif len(name.split(" ")) < 2:
@@ -300,18 +278,9 @@ def create_qr_codes(path_out: str, fuzz: str = None, from_file=False) -> None:
 
             validation_json = read_json("resources/data/validation.json", exit_on_err=True)
 
-            # TODO: Try to take advantage of json writing errors to check for duplicates
-            while True:
-                if data in validation_json:
-                    if input("Name possibly already exists. Create a new one? (y/n) ").lower() == 'y':
-                        qr.make(
-                            data := sha256((fuzz[::-1]).join(stripped.split()).encode()).hexdigest()
-                        ).save(f"{path_out}/{stripped}.png")
-
-                    continue
-
-                else:
-                    break
+            if data in validation_json:
+                print("Name already exists. Regenerating QR code")
+                qr.make(data).save(f"{path_out}/{stripped}.png")
 
             validation_json[data] = stripped
             write_json("resources/data/validation.json", validation_json)
