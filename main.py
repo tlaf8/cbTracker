@@ -45,7 +45,7 @@ if __name__ == "__main__":
             cam.release()
 
             cv2.waitKey(500)
-            show_proc_img("resources/img/updating.png")
+            show_img("resources/img/updating.png")
             cv2.waitKey(1)
 
             current_time = datetime.now()

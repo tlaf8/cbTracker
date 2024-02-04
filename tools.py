@@ -20,6 +20,7 @@ class TC:
 
 
 def write_log() -> None:
+    """Write traceback logs to a file."""
     try:
         with open(f"logs/{time.strftime('%Y-%m-%d_%H%M%S')}_log.txt", "w+") as log:
             traceback.print_exc(file=log)
@@ -30,11 +31,28 @@ def write_log() -> None:
 
 
 def read_txt(path: str) -> tuple[list[str], list[str]]:
+    """Read data from a text file.
+
+    Args:
+        path (str): The path to the text file.
+
+    Returns:
+        tuple: A tuple containing two lists - lines not starting with '#' and lines starting with '#'.
+    """
     with open(path, 'r') as file_in:
         return [line for line in file_in if line[0] != '#'], [line for line in file_in if line[0] == '#']
 
 
 def read_json(path: str, exit_on_err=True) -> dict[str: str] | list:
+    """Read JSON data from a file.
+
+    Args:
+        path (str): The path to the JSON file.
+        exit_on_err (bool, optional): Whether to exit the program on error. Defaults to True.
+
+    Returns:
+        dict | list: The JSON data read from the file.
+    """
     try:
         with open(path, "r") as f:
             return json.load(f)
@@ -45,7 +63,7 @@ def read_json(path: str, exit_on_err=True) -> dict[str: str] | list:
         if "validation.json" in path or "api_key.json" in path:
             if input(f"{TC.HELP}[HELP]{TC.ENDC}\tLooks like {path} is missing. Download it? (y/n) ").lower() == "y":
                 sync_local(pwinput())
-                print(f"{TC.OK}[INFO]{TC.ENDC}\tFiles downloaded successfully. Please restart the program.")
+                print(f"{TC.OK}[INFO]{TC.ENDC}\tFiles downloaded successfully")
                 print(f"{TC.OK}[INFO]{TC.ENDC}\tExiting in 5")
                 time.sleep(5)
                 exit(0)
@@ -69,6 +87,12 @@ def read_json(path: str, exit_on_err=True) -> dict[str: str] | list:
 
 
 def write_json(path: str, data: dict) -> None:
+    """Write JSON data to a file.
+
+    Args:
+        path (str): The path to the JSON file.
+        data (dict): The data to be written.
+    """
     with open(path, "w") as f:
         try:
             json.dump(data, f, indent=4)
@@ -80,6 +104,11 @@ def write_json(path: str, data: dict) -> None:
 
 
 def sync_local(pwd: str) -> None:
+    """Synchronize local data with AWS.
+
+    Args:
+        pwd (str): The password for authentication.
+    """
     returned = requests.post("https://tryobgwrhsrnbyq5re77znzxry0brhfc.lambda-url.ca-central-1.on.aws/",
                              data={"pass": sha256(pwd.encode()).hexdigest()}).content.decode("utf-8")
 
@@ -96,6 +125,12 @@ def sync_local(pwd: str) -> None:
 
 
 def update_sheet(entry, sheet) -> None:
+    """Update a Google Sheets document.
+
+    Args:
+        entry: The data entry to update.
+        sheet: The Google Sheets document.
+    """
     print(f"{TC.OK}[INFO]{TC.ENDC}\tUpdating sheet")
 
     # Go from H2 to the end of data in column H
@@ -122,7 +157,13 @@ def update_sheet(entry, sheet) -> None:
     print(f"{TC.OK}[INFO]{TC.ENDC}\tFinished updating sheet")
 
 
-def show_proc_img(img_path: str, msg: str = "") -> None:
+def show_img(img_path: str, msg: str = "") -> None:
+    """Show processing image with a message.
+
+    Args:
+        img_path (str): The path to the image file.
+        msg (str, optional): The message to display. Defaults to "".
+    """
     img = cv2.putText(img=cv2.imread(img_path),
                       text=msg,
                       org=[10, 30],
@@ -140,6 +181,19 @@ def read_code(cam: cv2.VideoCapture,
               hash_dict: dict,
               status_dict: dict,
               expecting: str) -> tuple[str, str]:
+    """Read QR codes from camera input.
+
+    Args:
+        cam (cv2.VideoCapture): The camera object.
+        decoder (cv2.QRCodeDetector): The QR code decoder object.
+        msg (str): The message to display.
+        hash_dict (dict): Dictionary containing hashed IDs.
+        status_dict (dict): Dictionary containing status values.
+        expecting (str): The expected data type.
+
+    Returns:
+        tuple[str, str]: A tuple containing the obtained data and action.
+    """
     settings = read_json("resources/data/settings.json")
     while True:
         _, raw_frame = cam.read()
@@ -194,8 +248,12 @@ def read_code(cam: cv2.VideoCapture,
 
                     if input("Sync AWS with local machine? (y/n) ").lower() == "y":
                         aws_key = pwinput()
-                        upload_data(read_json("resources/data/validation.json", exit_on_err=True), "validation", aws_key)
-                        upload_data(read_json("resources/data/api_key.json", exit_on_err=True), "apikey", aws_key)
+                        upload_data(
+                            read_json("resources/data/validation.json", exit_on_err=True), "validation", aws_key
+                        )
+                        upload_data(
+                            read_json("resources/data/api_key.json", exit_on_err=True), "apikey", aws_key
+                        )
                         print("Finished syncing AWS")
 
                 elif key == ord('n'):
@@ -206,32 +264,42 @@ def read_code(cam: cv2.VideoCapture,
             else:
                 print(f"{TC.OK}[INFO]{TC.ENDC}\tRead value: {raw_result}")
                 if raw_result in hash_dict:  # Student ID was scanned
-                    show_proc_img("resources/img/scan_img.png", f"Obtained: {(decrypt := hash_dict[raw_result])}")
+                    show_img("resources/img/scan_img.png", f"Obtained: {(decrypt := hash_dict[raw_result])}")
                     cv2.waitKey(500)
 
                     if expecting == "student":
                         return decrypt, ""  # Return empty string for consistency
 
                     else:
-                        show_proc_img("resources/img/loading.png", "Expected a device")
+                        show_img("resources/img/loading.png", "Expected a device")
                         cam.release()
                         cv2.waitKey(3000)
 
                 elif raw_result in status_dict:  # Device was scanned
                     action = status_flip[status_dict[result := raw_result].value]
-                    show_proc_img("resources/img/scan_img.png", f"Obtained: {result}")
+                    show_img("resources/img/scan_img.png", f"Obtained: {result}")
                     cv2.waitKey(500)
 
                     if expecting == "device":
                         return result, action
 
                     else:
-                        show_proc_img("resources/img/loading.png", "Expected an ID")
+                        show_img("resources/img/loading.png", "Expected an ID")
                         cam.release()
                         cv2.waitKey(3000)
 
 
 def upload_data(data: dict, kind: str, pwd: str) -> str:
+    """Upload data to AWS.
+
+    Args:
+        data (dict): The data to upload.
+        kind (str): The type of data.
+        pwd (str): The password for authentication.
+
+    Returns:
+        str: Response message.
+    """
     params = {
         "pass": sha256(pwd.encode()).hexdigest(),
         "kind": kind,
@@ -243,6 +311,13 @@ def upload_data(data: dict, kind: str, pwd: str) -> str:
 
 
 def create_qr_codes(path_out: str, fuzz: str = None, from_file=False) -> None:
+    """Create QR codes.
+
+    Args:
+        path_out (str): The output path for the QR codes.
+        fuzz (str, optional): Fuzz string for hashing. Defaults to None.
+        from_file (bool, optional): Whether to read names from a file. Defaults to False.
+    """
     font = ImageFont.truetype("resources/data/RobotoMono-Regular.ttf", size=16)
 
     # DO NOT REMOVE! Code created courtesy of developer and princess Lily
