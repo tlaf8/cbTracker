@@ -259,7 +259,9 @@ def read_code(cam: cv2.VideoCapture,
                 elif key == ord('n'):
                     cv2.destroyAllWindows()
                     cam.release()
-                    create_qr_codes("resources/qr_codes/output", fuzz=pwinput("Fuzzer: "))
+                    create_qr_codes(
+                        "resources/qr_codes/output",
+                        fuzz=pwinput(f"Fuzzer for convolution (Ex. John{TC.HELP}fuzz{TC.ENDC}Doe): "))
 
             else:
                 print(f"{TC.OK}[INFO]{TC.ENDC}\tRead value: {raw_result}")
@@ -310,6 +312,14 @@ def upload_data(data: dict, kind: str, pwd: str) -> str:
     return resp.content.decode("utf-8")
 
 
+def img_draw_txt(path: str, filename: str):
+    font = ImageFont.truetype("resources/data/RobotoMono-Regular.ttf", size=16)
+    img = Image.open(f"{path}/{filename}.png")
+    printer = ImageDraw.Draw(img)
+    printer.text((img.width / 2 - font.getlength(filename) / 2, img.height - 30), filename, font=font)
+    img.save(f"{path}/{filename}.png")
+
+
 def create_qr_codes(path_out: str, fuzz: str = None, from_file=False) -> None:
     """Create QR codes.
 
@@ -318,7 +328,6 @@ def create_qr_codes(path_out: str, fuzz: str = None, from_file=False) -> None:
         fuzz (str, optional): Fuzz string for hashing. Defaults to None.
         from_file (bool, optional): Whether to read names from a file. Defaults to False.
     """
-    font = ImageFont.truetype("resources/data/RobotoMono-Regular.ttf", size=16)
 
     # DO NOT REMOVE! Code created courtesy of developer and princess Lily
     # help(code)
@@ -329,49 +338,48 @@ def create_qr_codes(path_out: str, fuzz: str = None, from_file=False) -> None:
         with open("resources/qr_codes/creation_list.txt", 'w') as creation_list:
             creation_list.writelines(comments)
 
-    else:
-        names = []
-        print("Enter 'DONE' or nothing when finished.")
-        while True:
-            if (name := input("Enter full name of student/device: ")) == "DONE" or name == "":
-                break
+    names = {}
+    print("Enter nothing when finished.")
+    while True:
+        if (name := input("Enter full name of student/device: ")) == "":
+            break
 
-            elif len(name.split(" ")) < 2:
-                print("Only found 1 name. Ensure that first, last and other names are entered")
+        if len(name.split(" ")) < 2:
+            if input("Only one name found. Is this a device? (y/n) ").lower() == "y":
+                names[" ".join([i.strip() for i in name.split()])] = "no-encrypt"
 
-            else:
-                names.append(" ".join([i.strip() for i in name.split()]))
+        else:
+            names[" ".join([i.strip() for i in name.split()])] = "encrypt"
 
     print("Creating QR codes for the following names:")
-    for name in names:
-        print(f"  --> {name}")
+    for name, proc in names.items():
+        print(f"  --> {name:<20} ({proc})")
 
     if input("Continue? (y/n) ").lower() != 'y':
         return
 
     validation_json = read_json("resources/data/validation.json", exit_on_err=True)
-    for entry in names:
+    for entry, encrypt in names.items():
         stripped = entry.strip()
 
-        if fuzz != "":
+        if encrypt == "encrypt":
             try:
                 qr.make(
                     data := sha256(fuzz.join(stripped.split()).encode()).hexdigest()
                 ).save(f"{path_out}/{stripped}.png")
+                img_draw_txt(path_out, stripped)
 
             except FileNotFoundError:
                 print("Path invalid. Defaulting")
                 qr.make(
                     data := sha256(fuzz.join(stripped.split()).encode()).hexdigest()
                 ).save(f"resources/qr_codes/output/{stripped}.png")
+                img_draw_txt(f"resources/qr_codes/output", stripped)
 
             if data in validation_json:
                 print("Name already exists. Regenerating QR code")
                 qr.make(data).save(f"{path_out}/{stripped}.png")
-                img = Image.open(f"{path_out}/{entry}.png")
-                printer = ImageDraw.Draw(img)
-                printer.text((img.width / 2 - font.getlength(entry) / 2, img.height - 30), entry, font=font)
-                img.save(f"{path_out}/{entry}.png")
+                img_draw_txt(path_out, stripped)
                 continue
 
             validation_json[data] = stripped
@@ -379,7 +387,4 @@ def create_qr_codes(path_out: str, fuzz: str = None, from_file=False) -> None:
 
         else:
             qr.make(stripped).save(f"{path_out}/{stripped}.png")
-            img = Image.open(f"{path_out}/{entry}.png")
-            printer = ImageDraw.Draw(img)
-            printer.text((img.width / 2 - font.getlength(entry) / 2, img.height - 30), entry, font=font)
-            img.save(f"{path_out}/{entry}.png")
+            img_draw_txt(path_out, stripped)
