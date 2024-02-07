@@ -370,7 +370,6 @@ def create_qr_codes(path_out: str, fuzz: str = None, from_file=False) -> None:
                 qr.make(data).save(f"{path_out}/{stripped}.png")
 
             validation_json[data] = stripped
-            write_json("resources/data/validation.json", validation_json)
 
         else:
             qr.make(stripped).save(f"{path_out}/{stripped}.png")
@@ -380,4 +379,5 @@ def create_qr_codes(path_out: str, fuzz: str = None, from_file=False) -> None:
         printer.text((img.width / 2 - font.getlength(entry) / 2, img.height - 30), entry, font=font)
         img.save(f"{path_out}/{entry}.png")
 
+    write_json("resources/data/validation.json", validation_json)
     upload_data(validation_json, "validation", pwinput())
