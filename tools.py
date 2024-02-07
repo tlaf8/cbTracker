@@ -368,16 +368,18 @@ def create_qr_codes(path_out: str, fuzz: str = None, from_file=False) -> None:
             if data in validation_json:
                 print("Name already exists. Regenerating QR code")
                 qr.make(data).save(f"{path_out}/{stripped}.png")
+                img = Image.open(f"{path_out}/{entry}.png")
+                printer = ImageDraw.Draw(img)
+                printer.text((img.width / 2 - font.getlength(entry) / 2, img.height - 30), entry, font=font)
+                img.save(f"{path_out}/{entry}.png")
+                continue
 
             validation_json[data] = stripped
+            write_json("resources/data/validation.json", validation_json)
 
         else:
             qr.make(stripped).save(f"{path_out}/{stripped}.png")
-
-        img = Image.open(f"{path_out}/{entry}.png")
-        printer = ImageDraw.Draw(img)
-        printer.text((img.width / 2 - font.getlength(entry) / 2, img.height - 30), entry, font=font)
-        img.save(f"{path_out}/{entry}.png")
-
-    write_json("resources/data/validation.json", validation_json)
-    upload_data(validation_json, "validation", pwinput())
+            img = Image.open(f"{path_out}/{entry}.png")
+            printer = ImageDraw.Draw(img)
+            printer.text((img.width / 2 - font.getlength(entry) / 2, img.height - 30), entry, font=font)
+            img.save(f"{path_out}/{entry}.png")
