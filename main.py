@@ -1,19 +1,19 @@
-import cv2
 import gspread
 from tools import *
 from datetime import datetime
 
 
 if __name__ == "__main__":
-    print(f"\n{TC.OK}[INFO]{TC.ENDC}\tSetting things up")
+    tc = TC()
+    tc.print_ok("Setting things up")
 
     # variables
     entry: dict = {}
     devices: dict = {}
 
     # file i/o
-    decrypt = read_json("resources/data/validation.json")
-    settings = read_json("resources/data/settings.json")
+    decrypt: dict = read_json("resources/data/validation.json")
+    settings: dict = read_json("resources/data/settings.json")
 
     # cv2
     decoder: cv2.QRCodeDetector = cv2.QRCodeDetector()
@@ -24,8 +24,8 @@ if __name__ == "__main__":
     calc_sheet: gspread.Worksheet = client.open("Chromebook Tracker").worksheet(settings["calculator sheet"])
 
     # gspread reading
-    lr_cb = len(cb_sheet.col_values(7))
-    lr_calc = len(calc_sheet.col_values(7))
+    lr_cb: int = len(cb_sheet.col_values(7))
+    lr_calc: int = len(calc_sheet.col_values(7))
     devices.update(zip([name.value for name in cb_sheet.range(f"G2:G{lr_cb}")], cb_sheet.range(f"H2:H{lr_cb}")))
     devices.update(zip([name.value for name in calc_sheet.range(f"G2:G{lr_calc}")], calc_sheet.range(f"H2:H{lr_calc}")))
 
@@ -44,10 +44,12 @@ if __name__ == "__main__":
             student, _ = read_code(cam, decoder, "Show ID", decrypt, devices, "student")
             cam.release()
 
+            # Wait for half a second and show the updating img
             cv2.waitKey(500)
             show_img("resources/img/updating.png")
             cv2.waitKey(1)
 
+            # Perform the update
             current_time = datetime.now()
             entry["action"] = action
             entry["device"] = device
@@ -59,17 +61,23 @@ if __name__ == "__main__":
 
             # Update dicts in charge of keeping track of whether a device is rented out or not
             devices = {}
-            devices.update(zip([name.value for name in cb_sheet.range(f"G2:G{lr_cb}")], cb_sheet.range(f"H2:H{lr_cb}")))
-            devices.update(zip([name.value for name in calc_sheet.range(f"G2:G{lr_calc}")], calc_sheet.range(f"H2:H{lr_calc}")))
+            devices.update(zip(
+                [name.value for name in cb_sheet.range(f"G2:G{lr_cb}")], cb_sheet.range(f"H2:H{lr_cb}")
+            ))
+            devices.update(zip(
+                [name.value for name in calc_sheet.range(f"G2:G{lr_calc}")], calc_sheet.range(f"H2:H{lr_calc}")
+            ))
 
+        # cv2 throws random errors when it thinks it detects a qr code
+        # Catch all of these errors and simply put warning
         except cv2.error:
-            print(f"{TC.WARNING}[WARN]{TC.ENDC}\tOpenCV threw some errors, can likely ignore")
+            tc.print_warning("OpenCV threw some errors, can likely ignore")
 
+        # Catch all other errors and write traceback to log file
         except (Exception,):
             cv2.destroyAllWindows()
-            print(f"{TC.FAIL}[FATAL]{TC.ENDC}\tUnknown error occurred. See logs for more details")
-            print(f"{TC.OK}[INFO]{TC.ENDC}\tRestarting in 5 seconds...")
+            tc.print_fatal("Unknown error occurred. See logs for more details")
+            tc.print_ok("Restarting in 5 seconds...")
             time.sleep(5)
             write_log()
             continue
-

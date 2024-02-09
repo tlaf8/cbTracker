@@ -12,11 +12,120 @@ from PIL import Image, ImageDraw, ImageFont
 
 
 class TC:
-    OK = '\033[92m'
-    FAIL = '\033[91m'
-    ENDC = '\033[0m'
-    HELP = '\033[36m'
-    WARNING = '\033[93m'
+    """
+    A class for text coloring and formatting with predefined color codes.
+
+    Attributes:
+        ok (str): ANSI escape code for green messages.
+        fail (str): ANSI escape code for red messages.
+        help (str): ANSI escape code for blue messages.
+        warning (str): ANSI escape code for yellow messages.
+        end (str): ANSI escape code for ending text formatting.
+
+    Methods:
+        format(txt: str, category: str) -> str:
+            Format the given text with the appropriate ANSI escape code based on the specified category.
+
+        print_ok(msg: str) -> None:
+            Print a message in green.
+
+        print_fail(msg: str) -> None:
+            Print a message in red.
+
+        print_help(msg: str) -> None:
+            Print a message in blue.
+
+        print_warning(msg: str) -> None:
+            Print a message in yellow.
+
+        print_fatal(msg: str) -> None:
+            Print a message in red indicating fatal errors.
+    """
+
+    def __init__(self) -> None:
+        """
+        Initialize TC class with predefined ANSI escape codes for different message categories.
+        """
+        self.ok = '\033[92m'
+        self.fail = '\033[91m'
+        self.help = '\033[36m'
+        self.warning = '\033[93m'
+        self.end = '\033[0m'
+
+    def format(self, txt: str, category: str) -> str:
+        """
+        Format the given text with the appropriate ANSI escape code based on the specified category.
+
+        Args:
+            txt (str): The text to be formatted.
+            category (str): The category of the message. Can be one of 'ok', 'fail', 'help', 'warning', or 'fatal'.
+
+        Returns:
+            str: The formatted text with the appropriate ANSI escape code.
+        """
+        match category:
+            case "ok":
+                return f"{self.ok}{txt}{self.end}"
+
+            case "fail":
+                return f"{self.fail}{txt}{self.end}"
+
+            case "help":
+                return f"{self.help}{txt}{self.end}"
+
+            case "warning":
+                return f"{self.warning}{txt}{self.end}"
+
+            case "fatal":
+                return f"{self.fail}{txt}{self.end}"
+
+            case _:
+                return f"{self.ok}{txt}{self.end}"
+
+    def print_ok(self, msg: str) -> None:
+        """
+        Print a message with an OK indicator.
+
+        Args:
+            msg (str): The message to be printed.
+        """
+        print(f"{self.ok}[INFO]{self.end}\t{msg}")
+
+    def print_fail(self, msg: str) -> None:
+        """
+        Print a message with a FAIL indicator.
+
+        Args:
+            msg (str): The message to be printed.
+        """
+        print(f"{self.fail}[FAIL]{self.end}\t{msg}")
+
+    def print_help(self, msg: str) -> None:
+        """
+        Print a message with a HELP indicator.
+
+        Args:
+            msg (str): The message to be printed.
+        """
+        print(f"{self.help}[HELP]{self.end}\t{msg}")
+
+    def print_warning(self, msg: str) -> None:
+        """
+        Print a message with a WARNING indicator.
+
+        Args:
+            msg (str): The message to be printed.
+        """
+        print(f"{self.warning}[WARN]{self.end}\t{msg}")
+
+    def print_fatal(self, msg: str) -> None:
+        """
+        Print a message with a FATAL indicator.
+
+        Args:
+            msg (str): The message to be printed.
+        """
+        print(f"{self.fail}[FATAL]{self.end}\t{msg}")
 
 
 def write_log() -> None:
@@ -24,6 +133,8 @@ def write_log() -> None:
     try:
         with open(f"logs/{time.strftime('%Y-%m-%d_%H%M%S')}_log.txt", "w+") as log:
             traceback.print_exc(file=log)
+
+        exit(1)
 
     except FileNotFoundError:
         os.mkdir("logs")
@@ -53,18 +164,18 @@ def read_json(path: str, exit_on_err=True) -> dict[str: str] | list:
     Returns:
         dict | list: The JSON data read from the file.
     """
+    tc = TC()
     try:
         with open(path, "r") as f:
             return json.load(f)
 
     except FileNotFoundError:
-        print(f"{TC.FAIL}[ERROR]{TC.ENDC}\tFile {path} could not be found. Check logs for more info")
-
+        tc.print_fail(f"File {path} could not be found. Check logs for more info")
         if "validation.json" in path or "api_key.json" in path:
-            if input(f"{TC.HELP}[HELP]{TC.ENDC}\tLooks like {path} is missing. Download it? (y/n) ").lower() == "y":
+            if input(tc.print_help(f"Looks like {path} is missing. Download it? (y/n) ")).lower() == "y":
                 sync_local(pwinput())
-                print(f"{TC.OK}[INFO]{TC.ENDC}\tFiles downloaded successfully")
-                print(f"{TC.OK}[INFO]{TC.ENDC}\tExiting in 5")
+                tc.print_ok("Files downloaded successfully")
+                tc.print_ok("Exiting in 5")
                 time.sleep(5)
                 exit(0)
 
@@ -77,12 +188,12 @@ def read_json(path: str, exit_on_err=True) -> dict[str: str] | list:
 
     except json.JSONDecodeError:
         if exit_on_err:
-            print(f"{TC.FAIL}[ERROR]{TC.ENDC}\tFile {path} invalid or empty. Check logs for more info")
+            tc.print_fail(f"File {path} invalid or empty. Check logs for more info")
             write_log()
             exit(1)
 
         else:
-            print(f"{TC.WARNING}[WARN]{TC.ENDC}\tFile {path} is empty")
+            tc.print_warning(f"File {path} is empty")
             return []
 
 
@@ -93,12 +204,13 @@ def write_json(path: str, data: dict) -> None:
         path (str): The path to the JSON file.
         data (dict): The data to be written.
     """
+    tc = TC()
     with open(path, "w") as f:
         try:
             json.dump(data, f, indent=4)
 
         except (Exception,):
-            print(f"{TC.FAIL}[ERROR]{TC.ENDC}\tCould not write json. Check logs for more info")
+            tc.print_fail("Could not write json. Check logs for more info")
             write_log()
             exit(1)
 
@@ -109,11 +221,15 @@ def sync_local(pwd: str) -> None:
     Args:
         pwd (str): The password for authentication.
     """
+    tc = TC()
     returned = requests.post("https://tryobgwrhsrnbyq5re77znzxry0brhfc.lambda-url.ca-central-1.on.aws/",
-                             data={"pass": sha256(pwd.encode()).hexdigest()}).content.decode("utf-8")
+                             data={
+                                 "pass": sha256(pwd.encode()).hexdigest()
+                             }
+                             ).content.decode("utf-8")
 
     if returned == "Unauthorized: Bad password":
-        print(f"{TC.FAIL}[ERROR]{TC.ENDC}\t{returned}")
+        tc.print_fail(returned)
         exit(1)
 
     returned = json.loads(returned)
@@ -131,11 +247,15 @@ def update_sheet(entry, sheet) -> None:
         entry: The data entry to update.
         sheet: The Google Sheets document.
     """
-    print(f"{TC.OK}[INFO]{TC.ENDC}\tUpdating sheet")
+    tc = TC()
+    tc.print_ok("Updating sheet")
 
     # Go from H2 to the end of data in column H
     status_lr = len(sheet.col_values(8))
-    status_cells = dict(zip([name.value for name in sheet.range(f"G2:G{status_lr}")], sheet.range(f"H2:H{status_lr}")))
+    status_cells = dict(zip(
+        # Device name (Column G) ------------maps to------------> Device status (Column H)
+        [name.value for name in sheet.range(f"G2:G{status_lr}")], sheet.range(f"H2:H{status_lr}")
+    ))
 
     # Grab last row + 1 from A to E, using A as search column
     data_lr = len(sheet.col_values(1))
@@ -154,7 +274,7 @@ def update_sheet(entry, sheet) -> None:
     # Update the cb_sheet with new values
     sheet.update_cells(list(status_cells.values()) + entry_cells)
 
-    print(f"{TC.OK}[INFO]{TC.ENDC}\tFinished updating sheet")
+    tc.print_ok("Finished updating sheet")
 
 
 def show_img(img_path: str, msg: str = "") -> None:
@@ -194,22 +314,24 @@ def read_code(cam: cv2.VideoCapture,
     Returns:
         tuple[str, str]: A tuple containing the obtained data and action.
     """
-    settings = read_json("resources/data/settings.json")
+    tc = TC()
+    settings: dict = read_json("resources/data/settings.json")
+    status_flip = {"IN": "OUT", "OUT": "IN"}
     while True:
         _, raw_frame = cam.read()
         raw_result, _, _ = decoder.detectAndDecode(raw_frame)
-        status_flip = {"IN": "OUT", "OUT": "IN"}
         if raw_frame is None:
-            print(f"{TC.FAIL}[ERROR]{TC.ENDC}\tCould not read camera")
-            write_log()
             cv2.destroyAllWindows()
             cam.release()
-            exit(1)
+            tc.print_fail("Could not read camera")
+            write_log()
 
         else:
+            # Camera read, but no qr codes detected
             if raw_result == "":
                 frame = cv2.flip(raw_frame, 1)
 
+                # Window setup
                 cv2.namedWindow("Scanner", flags=cv2.WINDOW_GUI_NORMAL)
                 cv2.resizeWindow("Scanner", settings["window x"], settings["window y"])
                 cv2.putText(img=frame,
@@ -231,11 +353,12 @@ def read_code(cam: cv2.VideoCapture,
 
                 cv2.imshow("Scanner", frame)
 
+                # Handle key presses
                 key = cv2.waitKey(1) & 0xFF
                 if key == ord('q'):
                     cv2.destroyAllWindows()
                     cam.release()
-                    print(f"{TC.OK}[INFO]{TC.ENDC}\tExiting")
+                    tc.print_ok("Exiting")
                     exit(0)
 
                 elif key == ord('s'):
@@ -249,10 +372,14 @@ def read_code(cam: cv2.VideoCapture,
                     if input("Sync AWS with local machine? (y/n) ").lower() == "y":
                         aws_key = pwinput()
                         upload_data(
-                            read_json("resources/data/validation.json", exit_on_err=True), "validation", aws_key
+                            read_json("resources/data/validation.json", exit_on_err=True),
+                            "validation",
+                            aws_key
                         )
                         upload_data(
-                            read_json("resources/data/api_key.json", exit_on_err=True), "apikey", aws_key
+                            read_json("resources/data/api_key.json", exit_on_err=True),
+                            "apikey",
+                            aws_key
                         )
                         print("Finished syncing AWS")
 
@@ -261,12 +388,15 @@ def read_code(cam: cv2.VideoCapture,
                     cam.release()
                     create_qr_codes(
                         "resources/qr_codes/output",
-                        fuzz=pwinput(f"Fuzzer for convolution (Ex. John{TC.HELP}fuzz{TC.ENDC}Doe): "))
+                        fuzz=pwinput(f"Fuzzer for convolution (Ex. John{tc.format("fuzz", "fail")}Doe): ")
+                    )
 
             else:
-                print(f"{TC.OK}[INFO]{TC.ENDC}\tRead value: {raw_result}")
+                tc.print_ok(f"Read value: {raw_result}")
                 if raw_result in hash_dict:  # Student ID was scanned
-                    show_img("resources/img/scan_img.png", f"Obtained: {(decrypt := hash_dict[raw_result])}")
+                    show_img("resources/img/scan_img.png",
+                             f"Obtained: {(decrypt := hash_dict[raw_result])}"
+                             )
                     cv2.waitKey(500)
 
                     if expecting == "student":
@@ -308,7 +438,9 @@ def upload_data(data: dict, kind: str, pwd: str) -> str:
         "data": base64.urlsafe_b64encode(json.dumps(data).encode())
     }
 
-    resp = requests.post("https://i5nqbfht5a6v4epzr5anistot40qkyaz.lambda-url.ca-central-1.on.aws/", data=params)
+    resp = requests.post("https://i5nqbfht5a6v4epzr5anistot40qkyaz.lambda-url.ca-central-1.on.aws/",
+                         data=params
+                         )
     return resp.content.decode("utf-8")
 
 
@@ -338,53 +470,52 @@ def create_qr_codes(path_out: str, fuzz: str = None, from_file=False) -> None:
         with open("resources/qr_codes/creation_list.txt", 'w') as creation_list:
             creation_list.writelines(comments)
 
-    names = {}
+    names: dict = {}
     print("Enter nothing when finished.")
     while True:
-        if (name := input("Enter full name of student/device: ")) == "":
-            break
+        if (name := input("Enter full name of student/device: ")) != "":
+            if len(name.split(" ")) < 2:
+                if input("Only one name found. Is this a device? (y/n) ").lower() == "y":
+                    names[" ".join([i.strip() for i in name.split()])] = "no-encrypt"
 
-        if len(name.split(" ")) < 2:
-            if input("Only one name found. Is this a device? (y/n) ").lower() == "y":
-                names[" ".join([i.strip() for i in name.split()])] = "no-encrypt"
+            else:
+                names[" ".join([i.strip() for i in name.split()])] = "encrypt"
 
-        else:
-            names[" ".join([i.strip() for i in name.split()])] = "encrypt"
+            continue
+        break
 
     print("Creating QR codes for the following names:")
     for name, proc in names.items():
         print(f"  --> {name:<20} ({proc})")
 
-    if input("Continue? (y/n) ").lower() != 'y':
-        return
+    if input("Continue? (y/n) ").lower() == 'y':
+        validation_json = read_json("resources/data/validation.json", exit_on_err=True)
+        for entry, encrypt in names.items():
+            stripped = entry.strip()
 
-    validation_json = read_json("resources/data/validation.json", exit_on_err=True)
-    for entry, encrypt in names.items():
-        stripped = entry.strip()
+            if encrypt == "encrypt":
+                try:
+                    qr.make(
+                        data := sha256(fuzz.join(stripped.split()).encode()).hexdigest()
+                    ).save(f"{path_out}/{stripped}.png")
+                    img_draw_txt(path_out, stripped)
 
-        if encrypt == "encrypt":
-            try:
-                qr.make(
-                    data := sha256(fuzz.join(stripped.split()).encode()).hexdigest()
-                ).save(f"{path_out}/{stripped}.png")
+                except FileNotFoundError:
+                    print("Path invalid. Defaulting")
+                    qr.make(
+                        data := sha256(fuzz.join(stripped.split()).encode()).hexdigest()
+                    ).save(f"resources/qr_codes/output/{stripped}.png")
+                    img_draw_txt(f"resources/qr_codes/output", stripped)
+
+                if data in validation_json:
+                    print("Name already exists. Regenerating QR code")
+                    qr.make(data).save(f"{path_out}/{stripped}.png")
+                    img_draw_txt(path_out, stripped)
+                    continue
+
+                validation_json[data] = stripped
+                write_json("resources/data/validation.json", validation_json)
+
+            else:
+                qr.make(stripped).save(f"{path_out}/{stripped}.png")
                 img_draw_txt(path_out, stripped)
-
-            except FileNotFoundError:
-                print("Path invalid. Defaulting")
-                qr.make(
-                    data := sha256(fuzz.join(stripped.split()).encode()).hexdigest()
-                ).save(f"resources/qr_codes/output/{stripped}.png")
-                img_draw_txt(f"resources/qr_codes/output", stripped)
-
-            if data in validation_json:
-                print("Name already exists. Regenerating QR code")
-                qr.make(data).save(f"{path_out}/{stripped}.png")
-                img_draw_txt(path_out, stripped)
-                continue
-
-            validation_json[data] = stripped
-            write_json("resources/data/validation.json", validation_json)
-
-        else:
-            qr.make(stripped).save(f"{path_out}/{stripped}.png")
-            img_draw_txt(path_out, stripped)
