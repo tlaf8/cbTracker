@@ -388,7 +388,7 @@ def read_code(cam: cv2.VideoCapture,
                     cam.release()
                     create_qr_codes(
                         "resources/qr_codes/output",
-                        fuzz=pwinput(f"Fuzzer for convolution (Ex. John{tc.format("fuzz", "fail")}Doe): ")
+                        fuzz=pwinput(f"Fuzzer for convolution (Ex. John{tc.format('fuzz', 'fail')}Doe): ")
                     )
 
             else:
