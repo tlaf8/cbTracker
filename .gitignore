@@ -4,6 +4,3 @@ resources/data/api_key.json
 resources/data/validation.json
 logs/*
 venv
-lily.py
-poster.py
-test.py
