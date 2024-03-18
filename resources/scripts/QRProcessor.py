@@ -1,12 +1,12 @@
 import cv2
 import numpy as np
-from .FileIO import read, write
-from .TermColor import TermColor
-from .Logging import write_log
-from .AWS import handle_sync
 import qrcode as qr
 from hashlib import sha256
 from pwinput import pwinput
+from .AWS import handle_sync
+from .Logging import write_log
+from .FileIO import read, write
+from .TermColor import TermColor
 from .ImageTools import add_text, add_text_f
 from .Exceptions import BadOrderException, UnknownQRCodeException
 tc = TermColor()
