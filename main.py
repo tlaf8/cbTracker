@@ -75,8 +75,20 @@ if __name__ == "__main__":
 
             # Update dicts in charge of keeping track of whether a device is rented out or not
             devices: dict[str, str] = {}
-            devices.update(zip([name.value for name in cb_sheet.range(f"G2:G{lr_cb}")], cb_sheet.range(f"H2:H{lr_cb}")))
-            devices.update(zip([name.value for name in calc_sheet.range(f"G2:G{lr_calc}")], calc_sheet.range(f"H2:H{lr_calc}")))
+
+            devices.update(
+                zip(
+                    [name.value for name in cb_sheet.range(f"G2:G{lr_cb}")],
+                    cb_sheet.range(f"H2:H{lr_cb}")
+                )
+            )
+
+            devices.update(
+                zip(
+                    [name.value for name in calc_sheet.range(f"G2:G{lr_calc}")],
+                    calc_sheet.range(f"H2:H{lr_calc}")
+                )
+            )
 
         # cv2 throws random errors when it thinks it detects a qr code
         # Catch all of these errors and simply put warning
