@@ -57,7 +57,7 @@ if __name__ == "__main__":
             action: str
             student: str
             device, action = qr_proc.process_code(qr_proc.read_code("Show Chromebook"), "device")
-            student, _ = qr_proc.process_code(qr_proc.read_code("Show ID"), "student")
+            student = qr_proc.process_code(qr_proc.read_code("Show ID"), "student")
 
             cv2.waitKey(500)
             cv2.imshow("Scanner", updating)
