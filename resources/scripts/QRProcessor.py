@@ -63,6 +63,7 @@ class QRProcessor:
             frame = add_text(frame, message, [10, 30])
             frame = add_text(frame, "Press 'q' to quit", [10, 60])
             cv2.namedWindow("Scanner", flags=cv2.WINDOW_GUI_NORMAL)
+            cv2.resizeWindow("Scanner", 800, 600)
             cv2.imshow("Scanner", frame)
 
             # Handle key presses

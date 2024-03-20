@@ -23,7 +23,7 @@ def read(path: str, exit_on_error: bool = True) -> dict[str, str] | list[str] | 
     except FileNotFoundError:
         tc.print_fail(f"File {path} could not be found. Check logs for more info")
         if "validation.json" in path or "api_key.json" in path:
-            if input(tc.format("Sync local machine with version stored in cloud? (y/n) ")) in ["y", "yes"]:
+            if input(tc.print_help("Sync local machine with version stored in cloud? (y/n) ")) in ["y", "yes"]:
                 tc.print_help("Starting sync tool")
                 handle_sync()
 
