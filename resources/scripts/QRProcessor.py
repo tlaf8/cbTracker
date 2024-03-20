@@ -1,6 +1,7 @@
 import cv2
 import numpy as np
 import qrcode as qr
+from gspread import Cell
 from hashlib import sha256
 from pwinput import pwinput
 from .AWS import handle_sync
@@ -13,24 +14,23 @@ tc = TermColor()
 
 
 class QRProcessor:
-    def __init__(self, hash_dict: dict[str, str], status_dict: dict[str, any]):
+    def __init__(self, hash_dict: dict[str, str]):
         """Initializes the QR processor with dictionaries for lookups and camera resources.
 
         Args:
             hash_dict: A dictionary containing hashed QR code data for students.
-            status_dict: A dictionary containing device statuses.
         """
         self.hash_dict: dict[str, str] = hash_dict
-        self.status_dict: dict[str, any] = status_dict
         self.decoder: cv2.QRCodeDetector = cv2.QRCodeDetector()
         self.loading: np.ndarray = cv2.imread("resources/img/loading.png")
         self.scan_img: np.ndarray = cv2.imread("resources/img/scan_img.png")
 
-    def read_code(self, message: str) -> str:
+    def read_code(self, message: str, device_names: list[str]) -> str:
         """Reads a QR code from the camera.
 
         Args:
             message: A message to display on the camera preview.
+            device_names: A list of strs that contain valid devices.
 
         Returns:
             The decoded QR code data if successful, otherwise raises exceptions.
@@ -49,7 +49,7 @@ class QRProcessor:
             raw_result: str
             raw_result, _, _ = self.decoder.detectAndDecode(raw_frame)
             if raw_result != "":
-                if raw_result not in self.status_dict.keys() and raw_result not in self.hash_dict.keys():
+                if raw_result not in device_names and raw_result not in self.hash_dict.keys():
                     badin: np.ndarray = add_text(self.loading.copy(), "Unrecognized QR Code", [10, 30])
                     cv2.imshow("Scanner", badin)
                     cv2.waitKey(3000)
@@ -59,11 +59,12 @@ class QRProcessor:
                 cam.release()
                 return raw_result
 
+            settings: dict[str, str | int] = read("resources/data/settings.json")
             frame: np.ndarray = cv2.flip(raw_frame, 1)
             frame = add_text(frame, message, [10, 30])
             frame = add_text(frame, "Press 'q' to quit", [10, 60])
             cv2.namedWindow("Scanner", flags=cv2.WINDOW_GUI_NORMAL)
-            cv2.resizeWindow("Scanner", 800, 600)
+            cv2.resizeWindow("Scanner", settings["window x"], settings["window y"])
             cv2.imshow("Scanner", frame)
 
             # Handle key presses
@@ -85,11 +86,12 @@ class QRProcessor:
                     fuzz=pwinput(f"Fuzzer for convolution (Ex. John{tc.format('fuzz', 'fail')}Doe): ")
                 )
 
-    def process_code(self, data: str, expecting: str) -> str | tuple[str, str]:
+    def process_code(self, data: str, status_dict: dict[str, Cell], expecting: str) -> str | tuple[str, str]:
         """Processes the decoded QR code data based on expectations.
 
         Args:
             data: The decoded QR code data.
+            status_dict: A dictionary containing device names and their status.
             expecting: The expected type of data ("student" or "device").
 
         Returns:
@@ -109,8 +111,8 @@ class QRProcessor:
                 cv2.waitKey(3000)
                 raise BadOrderException
 
-        elif data in self.status_dict:
-            action: str = {"IN": "OUT", "OUT": "IN"}[self.status_dict[data].value]  # lol
+        elif data in status_dict:
+            action: str = {"IN": "OUT", "OUT": "IN"}[status_dict[data].value]  # lol
 
             obtained: np.ndarray = add_text(self.scan_img.copy(), f"Obtained: {data}", [10, 30])
             cv2.imshow("Scanner", obtained)

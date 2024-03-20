@@ -1,6 +1,7 @@
 import cv2
 import gspread
 import numpy as np
+from gspread import Cell
 from datetime import datetime
 from resources.scripts.FileIO import read
 from resources.scripts.Sheets import update
@@ -16,7 +17,7 @@ if __name__ == "__main__":
 
     # variables
     entry: dict[str, str] = {}
-    devices: dict[str, str] = {}
+    devices: dict[str, Cell] = {}
 
     # file i/o and images
     decrypt: dict[str, str] = read("resources/data/validation.json")
@@ -49,15 +50,23 @@ if __name__ == "__main__":
     )
 
     # cv2
-    qr_proc: QRProcessor = QRProcessor(decrypt, devices)
+    qr_proc: QRProcessor = QRProcessor(decrypt)
 
     while True:
         try:
             device: str
             action: str
             student: str
-            device, action = qr_proc.process_code(qr_proc.read_code("Show Chromebook"), "device")
-            student = qr_proc.process_code(qr_proc.read_code("Show ID"), "student")
+            device, action = qr_proc.process_code(
+                qr_proc.read_code("Show Chromebook/Calculator", [*devices]),
+                devices,
+                "device"
+            )
+            student = qr_proc.process_code(
+                qr_proc.read_code("Show ID", [*devices]),
+                devices,
+                "student"
+            )
 
             cv2.waitKey(500)
             cv2.imshow("Scanner", updating)
@@ -75,14 +84,12 @@ if __name__ == "__main__":
 
             # Update dicts in charge of keeping track of whether a device is rented out or not
             devices: dict[str, str] = {}
-
             devices.update(
                 zip(
                     [name.value for name in cb_sheet.range(f"G2:G{lr_cb}")],
                     cb_sheet.range(f"H2:H{lr_cb}")
                 )
             )
-
             devices.update(
                 zip(
                     [name.value for name in calc_sheet.range(f"G2:G{lr_calc}")],

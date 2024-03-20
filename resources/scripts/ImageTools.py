@@ -34,9 +34,9 @@ def add_text(img: np.ndarray, text: str, loc: tuple[int] | list[int]) -> np.ndar
         img=img,
         text=text,
         org=loc,
-        fontFace=cv2.FONT_HERSHEY_DUPLEX,
+        fontFace=cv2.FONT_HERSHEY_SIMPLEX,
         fontScale=0.75,
-        color=[0, 0, 0],
-        thickness=1,
-        lineType=cv2.LINE_AA
+        color=[192, 0, 0],  # This uses BGR??
+        thickness=2,
+        lineType=cv2.LINE_8
     )

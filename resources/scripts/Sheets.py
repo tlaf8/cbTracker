@@ -12,8 +12,8 @@ def update(entry: dict[str, str], sheet: Worksheet) -> None:
     """
     tc.print_ok("Updating sheet")
 
-    # Go from H2 to the end of data in column H
-    status_lr: int = len(sheet.col_values(8))
+    # Go from H2 to the end of data in column G
+    status_lr: int = len(sheet.col_values(7))
     status_cells: dict[str, Cell] = dict(zip(
         # Device name (Column G) ------------maps to------------> Device status (Column H)
         [name.value for name in sheet.range(f"G2:G{status_lr}")], sheet.range(f"H2:H{status_lr}")
