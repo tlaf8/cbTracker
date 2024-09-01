@@ -1,19 +1,19 @@
 import cv2
 import gspread
 import numpy as np
-from gspread import Cell
 from datetime import datetime
 from resources.scripts.FileIO import read
-from resources.scripts.Sheets import update
+from resources.scripts.Sheets import update, pull_statuses
 from resources.scripts.Logging import write_log
 from resources.scripts.TermColor import TermColor
+from gspread import Cell, Worksheet, service_account
 from resources.scripts.QRProcessor import QRProcessor
 from resources.scripts.Exceptions import BadOrderException, UnknownQRCodeException
 
 
 if __name__ == "__main__":
     tc: TermColor = TermColor()
-    tc.print_ok("Setting things up")
+    tc.print_ok("Setting up")
 
     # variables
     entry: dict[str, str] = {}
@@ -25,29 +25,20 @@ if __name__ == "__main__":
     updating: np.ndarray = cv2.imread("resources/img/updating.png")
 
     # gspread setup
-    client: gspread.service_account = gspread.service_account_from_dict(
+    client: service_account = gspread.service_account_from_dict(
         read("resources/data/api_key.json")
     )
-    cb_sheet: gspread.Worksheet = client.open("Chromebook Tracker").worksheet(settings["chromebook sheet"])
-    calc_sheet: gspread.Worksheet = client.open("Chromebook Tracker").worksheet(settings["calculator sheet"])
 
-    # gspread reading
-    lr_cb: int = len(cb_sheet.col_values(7))
-    lr_calc: int = len(calc_sheet.col_values(7))
+    sheets: dict[str, Worksheet] = {
+        "chromebook": client.open("Chromebook Tracker").worksheet(settings["chromebook sheet"]),
+        "calculator": client.open("Chromebook Tracker").worksheet(settings["calculator sheet"]),
+        "religion": client.open("Chromebook Tracker").worksheet(settings["religion sheet"]),
+        "science": client.open("Chromebook Tracker").worksheet(settings["science sheet"])
+    }
 
-    devices.update(
-        zip(
-            [name.value for name in cb_sheet.range(f"G2:G{lr_cb}")],
-            cb_sheet.range(f"H2:H{lr_cb}")
-        )
-    )
-
-    devices.update(
-        zip(
-            [name.value for name in calc_sheet.range(f"G2:G{lr_calc}")],
-            calc_sheet.range(f"H2:H{lr_calc}")
-        )
-    )
+    # Update statuses of all rentals
+    for s in sheets.values():
+        devices.update(pull_statuses(s))
 
     # cv2
     qr_proc: QRProcessor = QRProcessor(decrypt)
@@ -57,11 +48,14 @@ if __name__ == "__main__":
             device: str
             action: str
             student: str
+            entry: dict[str, str]
+
             device, action = qr_proc.process_code(
-                qr_proc.read_code("Show Chromebook/Calculator", [*devices]),
+                qr_proc.read_code("Show Rental", [*devices]),
                 devices,
                 "device"
             )
+
             student = qr_proc.process_code(
                 qr_proc.read_code("Show ID", [*devices]),
                 devices,
@@ -80,22 +74,18 @@ if __name__ == "__main__":
             entry["student"] = student
             entry["time"] = f"{current_time.hour:02d}:{current_time.minute:02d}:{current_time.second:02d}"
 
-            update(entry, calc_sheet) if "CALC-" in device else update(entry, cb_sheet)
+            if "CALC" in device:
+                update(entry, sheets["calculator"])
+            elif "REL" in device:
+                update(entry, sheets["religion"])
+            elif "SCI" in device:
+                update(entry, sheets["science"])
+            else:
+                update(entry, sheets["chromebook"])
 
             # Update dicts in charge of keeping track of whether a device is rented out or not
-            devices: dict[str, str] = {}
-            devices.update(
-                zip(
-                    [name.value for name in cb_sheet.range(f"G2:G{lr_cb}")],
-                    cb_sheet.range(f"H2:H{lr_cb}")
-                )
-            )
-            devices.update(
-                zip(
-                    [name.value for name in calc_sheet.range(f"G2:G{lr_calc}")],
-                    calc_sheet.range(f"H2:H{lr_calc}")
-                )
-            )
+            for s in sheets.values():
+                devices.update(pull_statuses(s))
 
         # cv2 throws random errors when it thinks it detects a qr code
         # Catch all of these errors and simply put warning

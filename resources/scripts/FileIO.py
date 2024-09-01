@@ -1,5 +1,6 @@
 import json
-from .AWS import handle_sync
+from .AWS import _pull
+from pwinput import pwinput
 from .Logging import write_log
 from .TermColor import TermColor
 tc = TermColor()
@@ -23,9 +24,13 @@ def read(path: str, exit_on_error: bool = True) -> dict[str, str] | list[str] | 
     except FileNotFoundError:
         tc.print_fail(f"File {path} could not be found. Check logs for more info")
         if "validation.json" in path or "api_key.json" in path:
-            if input(tc.print_help("Sync local machine with version stored in cloud? (y/n) ")) in ["y", "yes"]:
+            if input(
+                tc.format("[HELP]", "help") + " Sync local machine with version stored in cloud? (y/n) "
+            ) in ["y", "yes"]:
                 tc.print_help("Starting sync tool")
-                handle_sync()
+                aws_key: str = pwinput()
+                _pull(aws_key)
+                tc.print_ok("Downloaded keys. Please restart the program.")
 
         write_log()
         exit(1)

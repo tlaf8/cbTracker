@@ -3,6 +3,24 @@ from gspread import Worksheet, Cell
 tc = TermColor()
 
 
+def pull_statuses(sheet: Worksheet) -> dict[str, Cell]:
+    """Obtains the status columns from the given worksheet.
+
+    Args:
+        sheet: gspread worksheet to pull from.
+    """
+    statuses: dict[str, Cell] = {}
+    last_row: int = len(sheet.col_values(7))
+    statuses.update(
+        zip(
+            # Device name (Column G) ------------maps to-----------> Device status (Column H)
+            [name.value for name in sheet.range(f"G2:G{last_row}")], sheet.range(f"H2:H{last_row}")
+        )
+    )
+
+    return statuses
+
+
 def update(entry: dict[str, str], sheet: Worksheet) -> None:
     """Update a Google Sheets document.
 
@@ -12,12 +30,7 @@ def update(entry: dict[str, str], sheet: Worksheet) -> None:
     """
     tc.print_ok("Updating sheet")
 
-    # Go from H2 to the end of data in column G
-    status_lr: int = len(sheet.col_values(7))
-    status_cells: dict[str, Cell] = dict(zip(
-        # Device name (Column G) ------------maps to------------> Device status (Column H)
-        [name.value for name in sheet.range(f"G2:G{status_lr}")], sheet.range(f"H2:H{status_lr}")
-    ))
+    status_cells: dict[str, Cell] = pull_statuses(sheet)
 
     # Grab last row + 1 from A to E, using A as search column
     data_lr: int = len(sheet.col_values(1))
@@ -37,3 +50,4 @@ def update(entry: dict[str, str], sheet: Worksheet) -> None:
     sheet.update_cells(list(status_cells.values()) + entry_cells)
 
     tc.print_ok("Finished updating sheet")
+

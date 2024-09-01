@@ -8,7 +8,8 @@ from .AWS import handle_sync
 from .Logging import write_log
 from .FileIO import read, write
 from .TermColor import TermColor
-from .ImageTools import add_text, add_text_f
+from .ImageTools import add_text
+from PIL import ImageFont, Image, ImageDraw
 from .Exceptions import BadOrderException, UnknownQRCodeException
 tc = TermColor()
 
@@ -30,7 +31,7 @@ class QRProcessor:
 
         Args:
             message: A message to display on the camera preview.
-            device_names: A list of strs that contain valid devices.
+            device_names: A list of strings that contain valid devices.
 
         Returns:
             The decoded QR code data if successful, otherwise raises exceptions.
@@ -138,19 +139,20 @@ class QRProcessor:
         names: dict[str, str] = {}
         tc.print_help("Enter nothing when finished.")
 
-        while (name := input("Enter full name of student/device: ")) != "":
+        while (name := input("Enter full name of student/rental: ")) != "":
             if len(name.split(" ")) < 2:
                 if input("Only one name found. Is this a device? (y/n) ").lower() == "y":
                     names[" ".join([i.strip() for i in name.split()])] = "no-encrypt"
 
-                else:
-                    names[" ".join([i.strip() for i in name.split()])] = "encrypt"
+            else:
+                names[" ".join([i.strip() for i in name.split()])] = "encrypt"
 
         print("Creating QR codes for the following names:")
         for name, proc in names.items():
             print(f"  --> {name:<20} ({proc})")
 
         if input("Continue? (y/n) ").lower() == 'y':
+            font: ImageFont = ImageFont.truetype("resources/data/RobotoMono-Regular.ttf", size=16)
             validation_json: dict[str, str] = read("resources/data/validation.json", exit_on_error=True)
             for entry, processing in names.items():
                 stripped: str = entry.strip()
@@ -161,8 +163,7 @@ class QRProcessor:
                         if data in validation_json:
                             raise ValueError
 
-                        qr.make(data).save(f"{path_out}/{stripped}.png")
-                        add_text_f(f"{path_out}/{stripped}.png", stripped)
+                        result: Image = qr.make(data).get_image()
 
                     except FileNotFoundError:
                         tc.print_fail("File not found. Check logs for more info")
@@ -178,5 +179,13 @@ class QRProcessor:
                     write("resources/data/validation.json", validation_json)
 
                 else:
-                    qr.make(stripped).save(f"{path_out}/{stripped}.png")
-                    add_text_f(f"{path_out}/{stripped}.png", stripped)
+                    result: Image = qr.make(stripped).get_image()
+
+                width, height = result.size
+                artist: ImageDraw = ImageDraw.Draw(result)
+                artist.text(
+                    (width / 2 - font.getlength(stripped) / 2, height - 30),
+                    stripped,
+                    font=font
+                )
+                result.save(f"{path_out}/{stripped}.png")
