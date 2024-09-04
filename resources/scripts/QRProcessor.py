@@ -62,8 +62,10 @@ class QRProcessor:
 
             settings: dict[str, str | int] = read("resources/data/settings.json")
             frame: np.ndarray = cv2.flip(raw_frame, 1)
+            frame = cv2.rectangle(frame, (0, 0), (225, 75), (255, 255, 255), -1)
             frame = add_text(frame, message, [10, 30])
             frame = add_text(frame, "Press 'q' to quit", [10, 60])
+            frame = cv2.resize(frame, (settings["window x"], settings["window y"]), interpolation=cv2.INTER_AREA)
             cv2.namedWindow("Scanner", flags=cv2.WINDOW_GUI_NORMAL)
             cv2.resizeWindow("Scanner", settings["window x"], settings["window y"])
             cv2.imshow("Scanner", frame)

@@ -3,11 +3,11 @@ import gspread
 import numpy as np
 from datetime import datetime
 from resources.scripts.FileIO import read
-from resources.scripts.Sheets import update, pull_statuses
 from resources.scripts.Logging import write_log
 from resources.scripts.TermColor import TermColor
-from gspread import Cell, Worksheet, service_account
 from resources.scripts.QRProcessor import QRProcessor
+from resources.scripts.Sheets import update, pull_statuses
+from gspread import Cell, Worksheet, Spreadsheet, service_account
 from resources.scripts.Exceptions import BadOrderException, UnknownQRCodeException
 
 
@@ -29,11 +29,12 @@ if __name__ == "__main__":
         read("resources/data/api_key.json")
     )
 
+    main_sheet: Spreadsheet = client.open("Chromebook Tracker")
     sheets: dict[str, Worksheet] = {
-        "chromebook": client.open("Chromebook Tracker").worksheet(settings["chromebook sheet"]),
-        "calculator": client.open("Chromebook Tracker").worksheet(settings["calculator sheet"]),
-        "religion": client.open("Chromebook Tracker").worksheet(settings["religion sheet"]),
-        "science": client.open("Chromebook Tracker").worksheet(settings["science sheet"])
+        "chromebook": main_sheet.worksheet(settings["chromebook sheet"]),
+        "calculator": main_sheet.worksheet(settings["calculator sheet"]),
+        "religion": main_sheet.worksheet(settings["religion sheet"]),
+        "science": main_sheet.worksheet(settings["science sheet"])
     }
 
     # Update statuses of all rentals
@@ -83,7 +84,7 @@ if __name__ == "__main__":
             else:
                 update(entry, sheets["chromebook"])
 
-            # Update dicts in charge of keeping track of whether a device is rented out or not
+            # Refresh dicts in charge of keeping track of whether a device is rented out or not
             for s in sheets.values():
                 devices.update(pull_statuses(s))
 
