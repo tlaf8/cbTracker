@@ -121,7 +121,7 @@ class QRProcessor:
             cv2.imshow("Scanner", obtained)
             cv2.waitKey(500)
 
-            if expecting == "device":
+            if expecting == "rental":
                 return data, action
 
             else:
