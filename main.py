@@ -53,7 +53,7 @@ if __name__ == "__main__":
             entry: dict[str, str]
 
             device, action = qr_proc.process_code(
-                qr_proc.read_code("Show Rental", [*devices], "rental"),
+                qr_proc.read_code("Show Rental", [*devices]), #, "rental"
                 devices,
                 "device"
             )
@@ -101,7 +101,7 @@ if __name__ == "__main__":
             continue
 
         except gspread.exceptions.APIError:
-            tc.print_fatal("API limit reached. Give me 100 seconds to reset...")
+            tc.print_fatal("API limit reached. Give me 100 seconds to cool down...")
             sleep(100)
             tc.print_ok("Done cooling down. Restart the program now.")
 
