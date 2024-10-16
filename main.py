@@ -55,7 +55,7 @@ if __name__ == "__main__":
             device, action = qr_proc.process_code(
                 qr_proc.read_code("Show Rental", [*devices]), #, "rental"
                 devices,
-                "device"
+                "rental"
             )
 
             student = qr_proc.process_code(
