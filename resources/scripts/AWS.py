@@ -4,7 +4,9 @@ import requests
 from hashlib import sha256
 from pwinput import pwinput
 from requests import Response
-from .TermColor import TermColor
+from resources.scripts.TermColor import TermColor
+from resources.scripts.Exceptions import StopExecution
+
 tc = TermColor()
 
 
@@ -20,7 +22,7 @@ def _pull(pwd: str) -> None:
 
     if returned == "Unauthorized: Bad password":
         tc.print_fail(returned)
-        exit(1)
+        raise StopExecution
 
     returned_data: dict = json.loads(returned)
 
@@ -52,8 +54,8 @@ def _push(data: dict, kind: str, pwd: str) -> str:
     }
 
     resp: Response = requests.post("https://i5nqbfht5a6v4epzr5anistot40qkyaz.lambda-url.ca-central-1.on.aws/",
-                       data=params
-                       )
+                                   data=params
+                                   )
     return resp.content.decode("utf-8")
 
 

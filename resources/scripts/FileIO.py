@@ -1,8 +1,10 @@
 import json
-from .AWS import _pull
 from pwinput import pwinput
-from .Logging import write_log
-from .TermColor import TermColor
+from resources.scripts.AWS import _pull
+from resources.scripts.Logging import write_log
+from resources.scripts.TermColor import TermColor
+from resources.scripts.Exceptions import StopExecution
+
 tc = TermColor()
 
 
@@ -25,7 +27,7 @@ def read(path: str, exit_on_error: bool = True) -> dict[str, str] | list[str] | 
         tc.print_fail(f"File {path} could not be found. Check logs for more info")
         if "validation.json" in path or "api_key.json" in path:
             if input(
-                tc.format("[HELP]", "help") + " Sync local machine with version stored in cloud? (y/n) "
+                    tc.format("[HELP]", "help") + " Sync local machine with version stored in cloud? (y/n) "
             ) in ["y", "yes"]:
                 tc.print_help("Starting sync tool")
                 aws_key: str = pwinput()
@@ -33,13 +35,13 @@ def read(path: str, exit_on_error: bool = True) -> dict[str, str] | list[str] | 
                 tc.print_ok("Downloaded keys. Please restart the program.")
 
         write_log()
-        exit(1)
+        raise StopExecution
 
     except json.JSONDecodeError:
         if exit_on_error:
             tc.print_fail(f"File {path} invalid or empty. Check logs for more info")
             write_log()
-            exit(1)
+            raise StopExecution
 
         else:
             tc.print_warning(f"File {path} is empty")
@@ -60,4 +62,4 @@ def write(path: str, data: dict[str, str]) -> None:
         except (Exception,):
             tc.print_fail("Could not write json. Check logs for more info")
             write_log()
-            exit(1)
+            raise StopExecution

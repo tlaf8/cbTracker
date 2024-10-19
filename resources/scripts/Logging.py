@@ -13,8 +13,6 @@ def write_log() -> None:
         with open(f"logs/{time.strftime('%Y-%m-%d_%H%M%S')}_log.txt", "w+") as log:
             traceback.print_exc(file=log)
 
-        exit(1)
-
     except FileNotFoundError:
         os.mkdir("logs")
         write_log()

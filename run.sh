@@ -20,12 +20,13 @@ if [ "$update" = "y" ]; then
     cp -r /tmp/cbTracker/!(run.sh|setup.sh) .
 
     if [ -f "$HOME/Documents/cbTracker/resources/requirements.txt" ]; then
+        venv/bin/pip install --upgrade pip
         venv/bin/pip install -r resources/requirements.txt
     else
         echo "Files were not copied properly. Aborting and try running again."
     fi
 
-    echo "Update complete. Starting program in 5"
+    echo "Update complete. Starting program..."
     sleep 5
     venv/bin/python main.py
 

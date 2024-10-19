@@ -4,13 +4,14 @@ import qrcode as qr
 from gspread import Cell
 from hashlib import sha256
 from pwinput import pwinput
-from .AWS import handle_sync
-from .Logging import write_log
-from .FileIO import read, write
-from .TermColor import TermColor
-from .ImageTools import add_text
 from PIL import ImageFont, Image, ImageDraw
-from .Exceptions import BadOrderException, UnknownQRCodeException
+from resources.scripts.AWS import handle_sync
+from resources.scripts.Logging import write_log
+from resources.scripts.FileIO import read, write
+from resources.scripts.TermColor import TermColor
+from resources.scripts.ImageTools import add_text
+from resources.scripts.Exceptions import BadOrderException, UnknownQRCodeException, StopExecution
+
 tc = TermColor()
 
 
@@ -46,6 +47,7 @@ class QRProcessor:
                 cam.release()
                 tc.print_fail("Could not read camera")
                 write_log()
+                raise StopExecution
 
             raw_result: str
             raw_result, _, _ = self.decoder.detectAndDecode(raw_frame)
@@ -76,7 +78,7 @@ class QRProcessor:
                 cv2.destroyAllWindows()
                 cam.release()
                 tc.print_ok("Exiting")
-                exit(0)
+                raise StopExecution
 
             elif key == ord('s'):
                 cv2.destroyAllWindows()
@@ -170,12 +172,12 @@ class QRProcessor:
                     except FileNotFoundError:
                         tc.print_fail("File not found. Check logs for more info")
                         write_log()
-                        exit(1)
+                        raise StopExecution
 
                     except ValueError:
                         tc.print_fail("Found duplicate entry in validation. Check logs for more info")
                         write_log()
-                        exit(1)
+                        raise StopExecution
 
                     validation_json[data] = stripped
                     write("resources/data/validation.json", validation_json)
