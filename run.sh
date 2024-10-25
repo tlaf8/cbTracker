@@ -27,7 +27,6 @@ if [ "$update" = "y" ]; then
     fi
 
     echo "Update complete. Starting program..."
-    sleep 5
     venv/bin/python main.py
 
 else

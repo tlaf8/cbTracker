@@ -92,7 +92,7 @@ if __name__ == "__main__":
         "calculator": main_sheet.worksheet(settings["calculator sheet"]),
         "religion": main_sheet.worksheet(settings["religion sheet"]),
         "science": main_sheet.worksheet(settings["science sheet"]),
-        "testing": main_sheet.worksheet("testing"),
+        # "testing": main_sheet.worksheet("testing"),
     }
 
     # Update statuses of all rentals
