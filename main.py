@@ -72,7 +72,8 @@ if __name__ == "__main__":
 
     # variables
     entry: dict[str, str] = {}
-    devices: dict[str, Cell] = {}
+    devices: dict[str, dict[str, Cell]] = {}
+    accepted: list[str] = []
 
     # file i/o and images
     try:
@@ -96,15 +97,16 @@ if __name__ == "__main__":
     }
 
     # Update statuses of all rentals
-    for s in tqdm(
-            sheets.values(),
+    for name, sheet in tqdm(
+            sheets.items(),
             unit=" sheets",
             desc="Pulling sheet data",
             colour="white",
             dynamic_ncols=True,
             bar_format="{desc}: {percentage:3.0f}%|{bar}| {n_fmt}/{total_fmt} [Elapsed: {elapsed}]"
     ):
-        devices.update(pull_statuses(s))
+        devices[name] = pull_statuses(sheet)
+        accepted.extend([*devices[name].keys()])
 
     # cv2
     qr_proc: QRProcessor = QRProcessor(decrypt)
@@ -117,12 +119,29 @@ if __name__ == "__main__":
     while True:
         try:
             device: str
-            action: str
             student: str
+            action: str
 
             # Scan QR codes for ID and rental
-            device, action = qr_proc.process_code(qr_proc.read_code("Show Rental", [*devices]), devices, "rental")
-            student = qr_proc.process_code(qr_proc.read_code("Show ID", [*devices]), devices, "student")
+            device = qr_proc.process_code(qr_proc.read_code("Show Rental", accepted), accepted, "rental")
+            student = qr_proc.process_code(qr_proc.read_code("Show ID", accepted), accepted, "student")
+
+            swap = {"IN": "OUT", "OUT": "IN"}
+            if device in devices['chromebook']:
+                action = swap[devices['chromebook'][device].value]
+                devices['chromebook'][device].value = action
+            elif device in devices['calculator']:
+                action = swap[devices['calculator'][device].value]
+                devices['calculator'][device].value = action
+            elif device in devices['religion']:
+                action = swap[devices['religion'][device].value]
+                devices['religion'][device].value = action
+            elif device in devices['science']:
+                action = swap[devices['science'][device].value]
+                devices['science'][device].value = action
+            else:
+                print("Unknown device scanned.")
+                continue
 
             # Wait so user can pull old QR code out of the way
             cv2.waitKey(500)
@@ -138,7 +157,6 @@ if __name__ == "__main__":
             entry["date"] = f"{current_time.day}/{current_time.month}/{current_time.year}"
             entry["student"] = student
             entry["time"] = f"{current_time.hour:02d}:{current_time.minute:02d}:{current_time.second:02d}"
-            devices[device].value = {"IN": "OUT", "OUT": "IN"}[action]
             entries.append(entry)
 
         # Handle OpenCV errors (if any)

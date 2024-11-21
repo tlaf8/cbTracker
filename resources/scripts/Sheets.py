@@ -37,7 +37,6 @@ def update(entries: list[dict[str, str]], sheets: dict[str, Worksheet]) -> None:
         "calculator": [],
         "religion": [],
         "science": [],
-        # "testing": []
     }
 
     # Sort out the entries
@@ -66,10 +65,7 @@ def update(entries: list[dict[str, str]], sheets: dict[str, Worksheet]) -> None:
         # Create an empty list to hold the cell objects
         cells_to_update: list[Cell] = []
         for i, entry in enumerate(e):
-            if entry["device"] in status_cells:
-                status_cells[entry["device"]].value = entry["action"]
-                cells_to_update.append(status_cells[entry["device"]])
-
+            status_cells[entry["device"]].value = entry["action"]
             entry_cells = sheet.range(f"A{data_lr + i + 1}:E{data_lr + i + 1}")
             entry_cells[0].value = entry["device"]
             entry_cells[1].value = entry["action"]
@@ -78,6 +74,7 @@ def update(entries: list[dict[str, str]], sheets: dict[str, Worksheet]) -> None:
             entry_cells[4].value = entry["time"]
             cells_to_update.extend(entry_cells)
 
-            sheet.update_cells(cells_to_update)
+        cells_to_update.extend(status_cells.values())
+        sheet.update_cells(cells_to_update)
 
     tc.print_ok("Finished updating sheet")

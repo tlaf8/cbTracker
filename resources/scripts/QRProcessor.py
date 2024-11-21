@@ -91,12 +91,12 @@ class QRProcessor:
                     fuzz=pwinput(f"Fuzzer for convolution (Ex. John{tc.format('fuzz', 'fail')}Doe): ")
                 )
 
-    def process_code(self, data: str, status_dict: dict[str, Cell], expecting: str) -> str | tuple[str, str]:
+    def process_code(self, data: str, accepted_devices: list[str], expecting: str) -> str:
         """Processes the decoded QR code data based on expectations.
 
         Args:
             data: The decoded QR code data.
-            status_dict: A dictionary containing device names and their status.
+            accepted_devices: A list containing accepted device names.
             expecting: The expected type of data ("student" or "device").
 
         Returns:
@@ -116,15 +116,13 @@ class QRProcessor:
                 cv2.waitKey(3000)
                 raise BadOrderException
 
-        elif data in status_dict:
-            action: str = {"IN": "OUT", "OUT": "IN"}[status_dict[data].value]  # lol
-
+        elif data in accepted_devices:
             obtained: np.ndarray = add_text(self.scan_img.copy(), f"Obtained: {data}", [10, 30])
             cv2.imshow("Scanner", obtained)
             cv2.waitKey(500)
 
             if expecting == "rental":
-                return data, action
+                return data
 
             else:
                 expected: np.ndarray = add_text(self.loading.copy(), "Expected an ID", [10, 30])
